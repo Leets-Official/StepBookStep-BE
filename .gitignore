@@ -38,3 +38,38 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Application Config - 민감 정보 (yml만) ###
+application-prod.yml
+application-local.yml  # 개인 로컬 설정이 있다면
+
+### MySQL Docker volume data ###
+docker/mysql/data/
+mysql/data/
+
+### Redis ###
+redis/data/
+dump.rdb
+
+### Logs ###
+logs/
+*.log
+*.log.*
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Docker ###
+docker-compose.override.yml
+
+### Backup files ###
+*.bak
+*.swp
+*~
+
+### Secrets & Keys ###
+secrets/
+*.pem
+*.key
+*.crt
