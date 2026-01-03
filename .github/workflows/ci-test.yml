@@ -1,4 +1,30 @@
-name: ci-test.yml
+name: CI - Build & Test (Local Only)
+
 on:
+  push:
+    branches: [ "develop", "main" ]
+  pull_request:
+    branches: [ "develop" ]
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: temurin
+
+      - name: Grant execute permission for Gradle
+        run: chmod +x gradlew
+
+      - name: Build project
+        run: ./gradlew clean build -x test
+
+      - name: Run tests
+        run: ./gradlew test
