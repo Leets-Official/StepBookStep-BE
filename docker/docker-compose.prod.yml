@@ -1,0 +1,49 @@
+services:
+  spring:
+    image: stepbookstep/server:prod-latest
+    container_name: stepbookstep-prod-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      ALADIN_API_KEY: ${ALADIN_API_KEY}
+      # Spring이 application-prod.yml을 읽도록 설정
+    depends_on:
+      - mysql
+      - redis
+    restart: always
+    networks:
+      - backend-bridge
+
+  mysql:
+    image: mysql:8.0
+    container_name: stepbookstep-mysql-prod
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    environment:
+      # CI/CD에서 환경 변수로 전달받음 (docker-compose up 시)
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: stepbookstep_prod
+      MYSQL_USER: stepbookstep_prod
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    restart: always
+    networks:
+      - backend-bridge
+
+  redis:
+    image: redis:7.2.5
+    container_name: stepbookstep-redis-prod
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    restart: always
+    networks:
+      - backend-bridge
+
+volumes:
+  mysql_prod_data:
+
+networks:
+  backend-bridge:
+    driver: bridge
