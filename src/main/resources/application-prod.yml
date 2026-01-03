@@ -1,0 +1,54 @@
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:mysql://mysql:3306/stepbookstep_prod?useSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: stepbookstep_prod
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+      password: ${REDIS_PASSWORD}
+
+# 프로덕션 로깅
+logging:
+  level:
+    root: INFO
+    org.hibernate.SQL: WARN
+    org.springframework.web: INFO
+    com.stepbookstep: INFO
+  file:
+    name: /app/logs/stepbookstep.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30
+
+# 알라딘 API
+aladin:
+  api:
+    ttb-key: ${ALADIN_API_KEY}
+
+# 프로덕션 보안 설정
+server:
+  error:
+    include-binding-errors: never
+    include-message: never
+    include-stacktrace: never
