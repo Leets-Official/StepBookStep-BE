@@ -1,0 +1,52 @@
+services:
+  spring:
+    image: stepbookstep/server:latest  # dev-cicd에서 빌드할 이미지
+    container_name: stepbookstep-dev-app
+    ports:
+      - "8080:8080"  # Dev는 8081 포트
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      # 환경 변수로 전달받음
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      ALADIN_API_KEY: ${ALADIN_API_KEY}
+    depends_on:
+      - mysql
+      - redis
+    restart: unless-stopped
+    networks:
+      - backend-bridge
+
+  mysql:
+    image: mysql:8.0
+    container_name: stepbookstep-mysql-dev
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    environment:
+      # 개발 환경도 환경 변수로 관리
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: stepbookstep_dev
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    restart: unless-stopped
+    networks:
+      - backend-bridge
+
+  redis:
+    image: redis:7.2.5
+    container_name: stepbookstep-redis-dev
+    restart: unless-stopped
+    networks:
+      - backend-bridge
+
+volumes:
+  mysql_dev_data:
+
+networks:
+  backend-bridge:
+    driver: bridge
