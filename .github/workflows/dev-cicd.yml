@@ -62,28 +62,31 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.dev.yml"
+          source: "docker/docker-compose.dev.yml"
           target: "/home/ubuntu/stepbookstep/"
 
       - name: 3️⃣ SSH into Dev Server & Deploy
         uses: appleboy/ssh-action@master
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          ALADIN_API_KEY: ${{ secrets.ALADIN_API_KEY }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: DB_HOST,DB_PORT,DB_USER,DB_PASSWORD,ALADIN_API_KEY
           script: |
             cd /home/ubuntu/stepbookstep
-            
+
+            # 최신 이미지 Pull
             docker pull stepbookstep/server:latest
-            
-            # 환경 변수 설정
-            export DB_HOST=${{ secrets.DB_HOST }}
-            export DB_PORT=${{ secrets.DB_PORT }}
-            export DB_USER=${{ secrets.DB_USER }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            export ALADIN_API_KEY=${{ secrets.ALADIN_API_KEY }}
-            
-            docker-compose -f docker-compose.dev.yml down
-            docker-compose -f docker-compose.dev.yml up -d
-            
+
+            # docker-compose가 환경 변수를 자동으로 사용
+            docker-compose -f docker/docker-compose.dev.yml down
+            docker-compose -f docker/docker-compose.dev.yml up -d
+
+            # 불필요한 이미지 정리
             docker image prune -f

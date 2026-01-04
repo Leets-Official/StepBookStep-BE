@@ -56,46 +56,44 @@ jobs:
       - name: 1️⃣ Checkout source
         uses: actions/checkout@v4
 
-      # application-prod.yml 생성
       - name: 2️⃣ Create application-prod.yml
         run: |
           mkdir -p config
           echo "${{ secrets.APPLICATION_PROD_YML }}" > config/application-prod.yml
 
-      # 필요한 파일들 업로드
       - name: 3️⃣ Upload files to Prod Server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker-compose.prod.yml,config/application-prod.yml"
+          source: "docker/docker-compose.prod.yml,config/application-prod.yml"
           target: "/home/ubuntu/stepbookstep/"
 
       - name: 4️⃣ SSH into Prod Server & Deploy
         uses: appleboy/ssh-action@master
+        env:
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          ALADIN_API_KEY: ${{ secrets.ALADIN_API_KEY }}
         with:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: MYSQL_ROOT_PASSWORD,MYSQL_PASSWORD,REDIS_PASSWORD,ALADIN_API_KEY
           script: |
             cd /home/ubuntu/stepbookstep
-            
+
             # 최신 이미지 Pull
             docker pull stepbookstep/server:prod-latest
-            
-            # 환경 변수 설정하여 docker-compose 실행
-            export MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}
-            export MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
-            export REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            export ALADIN_API_KEY=${{ secrets.ALADIN_API_KEY }}
-            
-            # docker-compose로 재배포
+
+            # docker-compose가 환경 변수를 자동으로 사용
             docker-compose -f docker-compose.prod.yml down
             docker-compose -f docker-compose.prod.yml up -d
-            
+
             # 불필요한 이미지 정리
             docker image prune -f
-            
+
             # 보안: yml 파일 권한 강화
             chmod 600 config/application-prod.yml
