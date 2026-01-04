@@ -3,7 +3,7 @@ services:
     image: stepbookstep/server:latest  # dev-cicd에서 빌드할 이미지
     container_name: stepbookstep-dev-app
     ports:
-      - "8080:8080"  # Dev는 8081 포트
+      - "8080:8080"
     environment:
       SPRING_PROFILES_ACTIVE: dev
       # 환경 변수로 전달받음
