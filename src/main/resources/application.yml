@@ -15,7 +15,7 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# ??? API ?? ??
+# 알라딘 API 공통 설정
 aladin:
   api:
     url: https://www.aladin.co.kr/ttb/api
@@ -23,18 +23,18 @@ aladin:
     output: json
     version: "20131101"
 
-# ?? ?? ??
+# 서버 공통 설정
 server:
   port: 8080
 
-# ?? ?? ??
+# 로깅 공통 설정
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
   level:
     com.zaxxer.hikari: INFO
 
-# Actuator ??
+# Actuator 설정
 management:
   endpoints:
     web:
@@ -42,4 +42,4 @@ management:
         include: "*"
   endpoint:
     health:
-      show-details: always  # Health ?? ?? ??
+      show-details: always  # Health 상세 정보 표시
