@@ -39,9 +39,8 @@ out/
 ### Kotlin ###
 .kotlin
 
-### Application Config - 민감 정보 (yml만) ###
-application-prod.yml
-application-local.yml  # 개인 로컬 설정이 있다면
+## application.yml
+**/resources/*.yml
 
 ### MySQL Docker volume data ###
 docker/mysql/data/
@@ -73,3 +72,8 @@ secrets/
 *.pem
 *.key
 *.crt
+*.yml
+
+### Env ###
+.env*
+docker/.env*
