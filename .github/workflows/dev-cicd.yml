@@ -9,19 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 1️⃣ Checkout source
+      - name: 1. Checkout source
         uses: actions/checkout@v4
 
-      - name: 2️⃣ Set up JDK
+      - name: 2. Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: 21
           distribution: temurin
 
-      - name: 3️⃣ Gradle Wrapper 권한 부여
+      - name: 3. application.yml 파일 설정
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_YML }}" > ./src/main/resources/application.yml
+
+      - name: 4. Gradle Wrapper 권한 부여
         run: chmod +x gradlew
 
-      - name: 3️⃣-1 Gradle Caching
+      - name: 5. Gradle Caching
         uses: actions/cache@v3
         with:
           path: |
@@ -31,62 +36,65 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: 4️⃣ Build JAR
+      - name: 6. Build JAR
         run: ./gradlew clean build -x test
 
-      - name: 5️⃣ Docker login
+      - name: 7. Docker login
         uses: docker/login-action@v3
         with:
-          username: stepbookstep
+          username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: 6️⃣ Build & Push Docker image
+      - name: 8. Build & Push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           dockerfile: Dockerfile
           push: true
-          tags: stepbookstep/server:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/server:latest
 
   cd:
     needs: ci
     runs-on: ubuntu-latest
 
     steps:
-      - name: 1️⃣ Checkout source
+      - name: 1. Checkout source
         uses: actions/checkout@v4
 
-      - name: 2️⃣ Upload docker-compose to Dev Server
+      - name: 2. Create .env file
+        run: |
+          echo "${{ secrets.ENV }}" > .env
+
+      - name: 2-1. .env 파일 EC2에 전송
         uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "docker/docker-compose.dev.yml"
-          target: "/home/ubuntu/stepbookstep/"
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: ".env"
+          target: "/home/ubuntu/stepbookstep-dev/docker/"
 
-      - name: 3️⃣ SSH into Dev Server & Deploy
-        uses: appleboy/ssh-action@master
-        env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          ALADIN_API_KEY: ${{ secrets.ALADIN_API_KEY }}
+      - name: Check docker-compose.dev.yml exists
+        run: ls -al ./docker/
+
+      - name: 3. docker-compose.yml 전달
+        uses: appleboy/scp-action@master
         with:
-          host: ${{ secrets.SSH_HOST }}
+          host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: DB_HOST,DB_PORT,DB_USER,DB_PASSWORD,ALADIN_API_KEY
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
+          source: "./docker/docker-compose.dev.yml"
+          target: "/home/ubuntu/stepbookstep-dev/docker/"  # <= 경로 일치시킴
+
+
+      - name: 4. SSH to Dev Server and Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_PUBLIC_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/stepbookstep
-
-            # 최신 이미지 Pull
-            docker pull stepbookstep/server:latest
-
-            # docker-compose가 환경 변수를 자동으로 사용
-            docker-compose -f docker/docker-compose.dev.yml down
-            docker-compose -f docker/docker-compose.dev.yml up -d
-
-            # 불필요한 이미지 정리
-            docker image prune -f
+            cd /home/ubuntu/stepbookstep-dev/docker/
+            docker pull ${{ secrets.DOCKER_USERNAME }}/server:latest
+            docker compose -f docker-compose.dev.yml down
+            docker compose -f docker-compose.dev.yml up -d
