@@ -38,3 +38,42 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+## application.yml
+**/resources/*.yml
+
+### MySQL Docker volume data ###
+docker/mysql/data/
+mysql/data/
+
+### Redis ###
+redis/data/
+dump.rdb
+
+### Logs ###
+logs/
+*.log
+*.log.*
+
+### OS ###
+.DS_Store
+Thumbs.db
+
+### Docker ###
+docker-compose.override.yml
+
+### Backup files ###
+*.bak
+*.swp
+*~
+
+### Secrets & Keys ###
+secrets/
+*.pem
+*.key
+*.crt
+*.yml
+
+### Env ###
+.env*
+docker/.env*

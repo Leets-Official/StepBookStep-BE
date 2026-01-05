@@ -1,0 +1,47 @@
+services:
+  stepbookstep-app:
+    image: stepbookstep/server:latest
+    container_name: stepbookstep-prod-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      ALADIN_API_KEY: ${ALADIN_API_KEY}
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - backend-bridge
+    env_file:
+      - .env
+
+  mysql:
+    image: mysql:8.0
+    container_name: stepbookstep-mysql
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - backend-bridge
+
+  redis:
+    image: redis:7.2.5
+    container_name: stepbookstep-redis-prod
+    ports:
+      - '6379:6379'
+    networks:
+      - backend-bridge
+
+volumes:
+  mysql_prod_data:
+
+networks:
+  backend-bridge:
+    driver: bridge
