@@ -1,6 +1,6 @@
 services:
   stepbookstep-app:
-    image: stepbookstep/server:latest
+    image: ${DOCKER_USERNAME}/server:latest
     container_name: stepbookstep-dev
     restart: unless-stopped
     env_file:

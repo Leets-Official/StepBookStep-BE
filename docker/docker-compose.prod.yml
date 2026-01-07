@@ -1,6 +1,6 @@
 services:
   stepbookstep-app:
-    image: stepbookstep/server:prod-latest
+    image: ${DOCKER_USERNAME}/server:prod-latest
     container_name: stepbookstep-prod-app
     restart: unless-stopped
     ports:
