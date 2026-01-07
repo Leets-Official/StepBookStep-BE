@@ -1,6 +1,6 @@
 services:
   stepbookstep-app:
-    image: stepbookstep/server:latest
+    image: stepbookstep/server:prod-latest
     container_name: stepbookstep-prod-app
     restart: unless-stopped
     ports:
@@ -22,7 +22,7 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - ./mysql/data:/var/lib/mysql
+      - mysql_prod_data:/var/lib/mysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
@@ -41,6 +41,7 @@ services:
 
 volumes:
   mysql_prod_data:
+    driver: local
 
 networks:
   backend-bridge:

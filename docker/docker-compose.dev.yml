@@ -29,6 +29,11 @@ services:
     ports:
       - '6379:6379'
 
+volumes:
+  mysql_dev_data:
+    driver: local
+
 networks:
   backend-bridge:
     driver: bridge
+

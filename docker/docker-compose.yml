@@ -22,6 +22,10 @@ services:
     networks:
       - backend-bridge
 
+volumes:
+  mysql_local_data:
+    driver: local
+
 networks:
   backend-bridge:
     driver: bridge
