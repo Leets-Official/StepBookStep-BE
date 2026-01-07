@@ -41,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: Dockerfile
+          file: Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/server:prod-latest
 
@@ -74,14 +74,14 @@ jobs:
           source: "./docker/docker-compose.prod.yml"
           target: "/home/ubuntu/stepbookstep-prod/"
 
-      - name: 5. SSH to Dev Server and Deploy
+      - name: 5. SSH to Prod Server and Deploy
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/stepbookstep-dev/docker/
-            docker pull ${{ secrets.DOCKER_USERNAME }}/server:latest
+            cd /home/ubuntu/stepbookstep-prod/docker/
+            docker pull ${{ secrets.DOCKER_USERNAME }}/server:prod-latest
             docker compose -f docker-compose.prod.yml down
             docker compose -f docker-compose.prod.yml up -d
