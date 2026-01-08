@@ -10,7 +10,8 @@ data class ApiResponse<T>(
     @JsonIgnore
     val httpStatus: HttpStatus,
     val success: Boolean,
-    val code: Int,
+    val status: Int,
+    val code: String ?= null,
     val message: String,
     val data: T? = null,
     val error: List<FieldErrorResponse>? = null
@@ -21,7 +22,8 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = HttpStatus.OK,
                 success = true,
-                code = HttpStatus.OK.value(),
+                status = 200,
+                code = null,
                 message = "호출이 성공적으로 완료되었습니다.",
                 data = data,
                 error = null
@@ -33,7 +35,8 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = HttpStatus.CREATED,
                 success = true,
-                code = HttpStatus.CREATED.value(),
+                status = 200,
+                code = null,
                 message = "성공적으로 생성되었습니다.",
                 data = null,
                 error = null
@@ -45,7 +48,8 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = HttpStatus.CREATED,
                 success = true,
-                code = HttpStatus.CREATED.value(),
+                status = 201,
+                code = null,
                 message = "성공적으로 생성되었습니다.",
                 data = data,
                 error = null
@@ -57,7 +61,8 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = HttpStatus.OK,
                 success = true,
-                code = HttpStatus.OK.value(),
+                status = 200,
+                code = null,
                 message = "성공적으로 수정되었습니다.",
                 data = null,
                 error = null
@@ -69,7 +74,8 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = HttpStatus.OK,
                 success = true,
-                code = HttpStatus.OK.value(),
+                status = 200,
+                code = null,
                 message = "성공적으로 삭제 되었습니다.",
                 data = null,
                 error = null
@@ -81,9 +87,9 @@ data class ApiResponse<T>(
             return ApiResponse(
                 httpStatus = e.errorCode.httpStatus,
                 success = false,
-                code = e.errorCode.code,
+                status = e.errorCode.httpStatus.value(),
+                code = e.errorCode.code.toString(),
                 message = e.errorCode.message,
-                data = null,
                 error = e.fieldErrorResponses
             )
         }
