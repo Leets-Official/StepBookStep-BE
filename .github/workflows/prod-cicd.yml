@@ -80,8 +80,9 @@ jobs:
           host: ${{ secrets.EC2_PUBLIC_IP }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.EC2_PRIVATE_KEY }}
+          command_timeout: 15m
           script: |
             cd /home/ubuntu/stepbookstep-prod/docker/
             docker pull ${{ secrets.DOCKER_USERNAME }}/server:prod-latest
-            docker compose -f docker-compose.prod.yml down
+            docker compose -f docker-compose.prod.yml down --timeout 60
             docker compose -f docker-compose.prod.yml up -d
