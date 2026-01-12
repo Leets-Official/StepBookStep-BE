@@ -1,87 +1,93 @@
 package com.stepbookstep.server.security.jwt
 
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
+import com.stepbookstep.server.global.response.CustomException
+import com.stepbookstep.server.global.response.ErrorCode
+import io.jsonwebtoken.*
+import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import org.springframework.stereotype.Component
-import java.nio.charset.StandardCharsets
+import java.security.Key
 import java.util.Date
 
 /**
- * JWT 생성 및 검증을 담당하는 Provider 클래스
- *
- * 역할:
- * - Access Token / Refresh Token 생성
- * - JWT 서명 및 만료 시간 설정
- * - 토큰 파싱을 통한 사용자 식별(userId) 및 토큰 타입 확인
- *
+ * HS256 기반 Access/Refresh 토큰 발급
+ * - 토큰 검증 및 userId 추출
  */
-
 @Component
 class JwtProvider(
     private val props: JwtProperties
 ) {
-    private val signingKey = Keys.hmacShaKeyFor(props.key.toByteArray(StandardCharsets.UTF_8))
+    private val signingKey: Key = run {
+        val keyBytes = Decoders.BASE64.decode(props.key)
+        Keys.hmacShaKeyFor(keyBytes)
+    }
 
-    /**
-     * 사용자 ID를 기반으로 Access Token 생성
-     */
-    fun createAccessToken(userId: Long): String =
-        createToken(userId, TokenType.ACCESS, props.access.expiration)
-
-    /**
-     * 사용자 ID를 기반으로 Refresh Token 생성
-     */
-    fun createRefreshToken(userId: Long): String =
-        createToken(userId, TokenType.REFRESH, props.refresh.expiration)
-
-    private fun createToken(userId: Long, type: TokenType, expiresInMs: Long): String {
+    fun createToken(userId: Long, tokenType: TokenType): String {
         val now = Date()
-        val expiry = Date(now.time + expiresInMs)
+        val expMillis = when (tokenType) {
+            TokenType.ACCESS -> props.access.expiration
+            TokenType.REFRESH -> props.refresh.expiration
+        }
+        val expiry = Date(now.time + expMillis)
 
         return Jwts.builder()
             .setSubject(userId.toString())
-            .claim(CLAIM_TYPE, type.name) // ACCESS / REFRESH
+            .claim("typ", tokenType.name)
             .setIssuedAt(now)
             .setExpiration(expiry)
-            .signWith(signingKey)
+            .signWith(signingKey, SignatureAlgorithm.HS256)
             .compact()
     }
 
     /**
-     * JWT 유효성 검증
-     * - 서명 검증
-     * - 만료 여부 검증
+     * 토큰에서 userId 추출 (검증 포함)
      */
-    fun validate(token: String): Boolean =
-        try {
-            parseClaims(token)
-            true
-        } catch (e: Exception) {
-            false
-        }
-
-    fun parseClaims(token: String): Claims {
-        return Jwts.parserBuilder()
-            .setSigningKey(signingKey)
-            .build()
-            .parseClaimsJws(token)
-            .body
+    fun getUserId(token: String): Long {
+        val claims = parseClaims(token)
+        return claims.subject.toLongOrNull()
+            ?: throw CustomException(ErrorCode.TOKEN_INVALID)
     }
 
     /**
-     * JWT에서 사용자 ID(subject) 추출
+     * typ 클레임(TokenType) 확인
      */
-    fun getUserId(token: String): Long =
-        parseClaims(token).subject.toLong()
+    fun getTokenType(token: String): TokenType {
+        val claims = parseClaims(token)
+        val type = claims["typ"]?.toString() ?: throw CustomException(ErrorCode.TOKEN_INVALID)
+        return runCatching { TokenType.valueOf(type) }
+            .getOrElse { throw CustomException(ErrorCode.TOKEN_UNSUPPORTED) }
+    }
 
     /**
-     * JWT의 토큰 타입(ACCESS / REFRESH) 추출
+     * 토큰 만료 여부(만료면 true)
      */
-    fun getTokenType(token: String): TokenType =
-        TokenType.valueOf(parseClaims(token)[CLAIM_TYPE].toString())
+    fun isExpired(token: String): Boolean {
+        return try {
+            val claims = parseClaims(token)
+            claims.expiration.before(Date())
+        } catch (e: ExpiredJwtException) {
+            true
+        }
+    }
 
-    companion object {
-        private const val CLAIM_TYPE = "typ"
+    private fun parseClaims(token: String): Claims {
+        try {
+            return Jwts.parserBuilder()
+                .setSigningKey(signingKey)
+                .build()
+                .parseClaimsJws(token)
+                .body
+        } catch (e: ExpiredJwtException) {
+            throw CustomException(ErrorCode.TOKEN_EXPIRED)
+        } catch (e: UnsupportedJwtException) {
+            throw CustomException(ErrorCode.TOKEN_UNSUPPORTED)
+        } catch (e: MalformedJwtException) {
+            throw CustomException(ErrorCode.TOKEN_INVALID)
+        } catch (e: SecurityException) {
+            throw CustomException(ErrorCode.TOKEN_INVALID)
+        } catch (e: IllegalArgumentException) {
+            throw CustomException(ErrorCode.TOKEN_NOT_FOUND)
+        }
     }
 }
+

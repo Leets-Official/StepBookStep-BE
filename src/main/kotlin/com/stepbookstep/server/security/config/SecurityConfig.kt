@@ -23,7 +23,7 @@ class SecurityConfig {
                     "/v3/api-docs/**"
                 ).permitAll()
 
-                // **우선 전부 허용**
+                // 우선 전부 허용 : 현재 개발 단계에서 보안 제약 없이 API를 테스트하기 위함
                 auth.anyRequest().permitAll()
             }
 
