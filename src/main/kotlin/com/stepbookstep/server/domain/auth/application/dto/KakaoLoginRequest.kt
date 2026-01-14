@@ -1,4 +1,4 @@
-package com.stepbookstep.server.auth.dto
+package com.stepbookstep.server.domain.auth.application.dto
 
 import jakarta.validation.constraints.NotBlank
 

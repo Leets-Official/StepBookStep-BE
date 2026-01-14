@@ -19,7 +19,6 @@ class RefreshTokenService(
     private val repo: RefreshTokenRepository,
     private val jwtProvider: JwtProvider,
     private val jwtProperties: JwtProperties,
-    private val refreshTokenRepository: RefreshTokenRepository,
     private val tokenHashUtil: TokenHashUtil
 ) {
 
@@ -28,6 +27,8 @@ class RefreshTokenService(
      */
     @Transactional
     fun save(userId: Long, refreshToken: String) {
+
+        repo.deleteByUserId(userId)
         val tokenHash = tokenHashUtil.sha256(refreshToken)
         val expiresAt = OffsetDateTime.now().plusSeconds(jwtProperties.refresh.expiration / 1000)
 
@@ -114,7 +115,7 @@ class RefreshTokenService(
     fun logout(refreshToken: String) {
         val tokenHash = tokenHashUtil.sha256(refreshToken)
 
-        val entity = refreshTokenRepository.findByTokenHash(tokenHash)
+        val entity = repo.findByTokenHash(tokenHash)
             ?: throw CustomException(ErrorCode.REFRESH_TOKEN_NOT_FOUND)
 
         if (entity.isRevoked()) {

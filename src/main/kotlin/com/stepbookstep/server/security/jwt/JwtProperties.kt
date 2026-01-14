@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.bind.ConstructorBinding
 
 /**
- * JWT 설정 정보를 application-local.yml 에서 바인딩
+ * JWT 설정 정보를 application-dev.yml 에서 바인딩
  */
 
 @ConfigurationProperties(prefix = "stepbookstep.jwt")
