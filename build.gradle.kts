@@ -61,6 +61,11 @@ dependencies {
     // Logging
     implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
 
+    // JWT (JJWT 라이브러리)
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.11.5")
+
     // Test
 //    testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
     testImplementation("org.springframework.boot:spring-boot-starter-security-test")
