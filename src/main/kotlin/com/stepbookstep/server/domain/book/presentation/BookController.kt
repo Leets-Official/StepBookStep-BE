@@ -17,6 +17,7 @@ class BookController(
     private val bookQueryService: BookQueryService
 ) {
 
+    // TODO: 북마크/루틴 연동 전 단계입니다.
     @Operation(summary = "도서 상세 조회", description = "도서 ID로 상세 정보를 조회합니다.")
     @GetMapping("/{bookId}")
     fun getBook(
