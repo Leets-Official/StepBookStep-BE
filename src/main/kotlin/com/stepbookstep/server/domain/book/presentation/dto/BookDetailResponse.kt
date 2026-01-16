@@ -48,6 +48,7 @@ data class BookInfo(
             )
         }
 
+        // TODO: 태그 키워드가 정해지면 리팩토링할 예정입니다.
         private fun buildTags(book: Book): List<String> {
             return listOf(
                 "Lv.${book.level}",
