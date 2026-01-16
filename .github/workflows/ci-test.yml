@@ -25,7 +25,12 @@ jobs:
 
       - name: Build project
         run: ./gradlew clean build -x test
+        env:
+          JWT_KEY: ${{ secrets.JWT_KEY }}
 
       - name: Run tests
         run: ./gradlew test
+        env:
+          JWT_KEY: ${{ secrets.JWT_KEY }}
+
 
