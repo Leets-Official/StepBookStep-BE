@@ -15,7 +15,7 @@ class BookQueryService(
 
     fun findById(id: Long): Book {
         return bookRepository.findById(id)
-            .orElseThrow { NoSuchElementException("Book not found: $id") }
+            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND, null) }
     }
 
     fun search(keyword: String?, level: Int): List<Book> {
