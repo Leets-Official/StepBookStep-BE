@@ -70,7 +70,7 @@ enum class ErrorCode(
     POST_TYPE_NOT_FOUND(404_004, HttpStatus.NOT_FOUND, "게시글 타입을 찾을 수 없습니다."),
     COMMENT_NOT_FOUND(404_005, HttpStatus.NOT_FOUND, "요청한 댓글을 찾을 수 없습니다."),
     PRODUCT_NOT_FOUND(404_006, HttpStatus.NOT_FOUND, "해당 상품을 찾을 수 없습니다."),
-
+    GOAL_NOT_FOUND(404_007, HttpStatus.NOT_FOUND, "해당 목표를 찾을 수 없습니다."),
 
     // ========================
     // 409 Conflict

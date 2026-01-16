@@ -1,6 +1,8 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
+import com.stepbookstep.server.domain.reading.domain.GoalMetric
+import com.stepbookstep.server.domain.reading.domain.ReadingGoalRepository
 import com.stepbookstep.server.domain.reading.domain.ReadingLog
 import com.stepbookstep.server.domain.reading.domain.ReadingLogRepository
 import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus
@@ -12,13 +14,15 @@ import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 @Service
 class ReadingLogService(
     private val readingLogRepository: ReadingLogRepository,
     private val userBookRepository: UserBookRepository,
-    private val bookRepository: BookRepository
+    private val bookRepository: BookRepository,
+    private val readingGoalRepository: ReadingGoalRepository
 ) {
 
     @Transactional
@@ -26,10 +30,10 @@ class ReadingLogService(
         userId: Long,
         bookId: Long,
         bookStatus: ReadingLogStatus,
-        recordDate: java.time.LocalDate,
+        recordDate: LocalDate,
         readQuantity: Int?,
         durationSeconds: Int?,
-        difficulty: String?
+        rating: Int?
     ): ReadingLog {
         if (!bookRepository.existsById(bookId)) {
             throw CustomException(ErrorCode.BOOK_NOT_FOUND)
@@ -37,17 +41,35 @@ class ReadingLogService(
 
         when (bookStatus) {
             READING -> {
-                if (readQuantity == null || durationSeconds == null) {
-                    throw CustomException(ErrorCode.INVALID_INPUT)
+                // 활성 목표 조회
+                val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
+                    ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
+
+                // 목표 metric에 따른 검증
+                when (activeGoal.metric) {
+                    GoalMetric.TIME -> {
+                        // 시간 목표: 쪽수 + 시간 둘 다 입력 가능, 최소 하나는 필수
+                        if (readQuantity == null && durationSeconds == null) {
+                            throw CustomException(ErrorCode.INVALID_INPUT)
+                        }
+                    }
+                    GoalMetric.PAGE -> {
+                        // 쪽수 목표: 쪽수만 필수
+                        if (readQuantity == null) {
+                            throw CustomException(ErrorCode.INVALID_INPUT)
+                        }
+                    }
                 }
             }
             FINISHED -> {
-                if (difficulty.isNullOrBlank()) {
+                if (rating == null || rating !in 1..5) {
                     throw CustomException(ErrorCode.INVALID_INPUT)
                 }
             }
-
-            STOPPED -> TODO()
+            STOPPED -> {
+                // STOPPED 로직 추가 필요
+                TODO()
+            }
         }
 
         val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
@@ -58,7 +80,7 @@ class ReadingLogService(
                     status = when (bookStatus) {
                         READING -> UserBookStatus.READING
                         FINISHED -> UserBookStatus.FINISHED
-                        STOPPED -> TODO()
+                        STOPPED -> UserBookStatus.STOPPED
                     }
                 )
             )
@@ -66,7 +88,7 @@ class ReadingLogService(
         val targetStatus = when (bookStatus) {
             READING -> UserBookStatus.READING
             FINISHED -> UserBookStatus.FINISHED
-            STOPPED -> TODO()
+            STOPPED -> UserBookStatus.STOPPED
         }
 
         if (userBook.status != targetStatus) {
@@ -83,7 +105,7 @@ class ReadingLogService(
                 recordDate = recordDate,
                 readQuantity = readQuantity,
                 durationSeconds = durationSeconds,
-                difficulty = difficulty
+                rating = rating
             )
         )
     }

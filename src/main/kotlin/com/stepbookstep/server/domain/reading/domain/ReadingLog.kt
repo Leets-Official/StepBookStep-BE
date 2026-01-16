@@ -37,8 +37,8 @@ class ReadingLog(
     @Column(name = "duration_seconds")
     val durationSeconds: Int? = null,
 
-    @Column(length = 50)
-    val difficulty: String? = null,
+    @Column(name = "rating")
+    val rating: Int? = null,  // 1~5 별점
 
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()

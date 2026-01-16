@@ -8,5 +8,5 @@ data class CreateReadingLogRequest(
     val recordDate: LocalDate,
     val readQuantity: Int? = null,
     val durationSeconds: Int? = null,
-    val difficulty: String? = null
+    val rating: Int? = null  // 1~5 별점
 )

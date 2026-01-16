@@ -73,7 +73,7 @@ class ReadingController(
         )
 
         val goalWithProgress = readingGoalService.getActiveGoalWithProgress(userId, bookId)
-            ?: throw CustomException(ErrorCode.POST_NOT_FOUND)
+            ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
 
         val response = ReadingGoalResponse.from(
             goal = goalWithProgress.goal,
@@ -154,7 +154,7 @@ class ReadingController(
             recordDate = request.recordDate,
             readQuantity = request.readQuantity,
             durationSeconds = request.durationSeconds,
-            difficulty = request.difficulty
+            rating = request.rating
         )
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.created(CreateReadingLogResponse(log.id)))
