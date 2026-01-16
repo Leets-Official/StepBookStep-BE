@@ -11,8 +11,8 @@ import jakarta.persistence.Table
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "reading_goals")
-class ReadingGoal(
+@Table(name = "user_books")
+class UserBook(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -24,30 +24,19 @@ class ReadingGoal(
     val bookId: Long,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var period: GoalPeriod,  // var로 변경 (수정 가능)
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var metric: GoalMetric,  // var로 변경 (수정 가능)
-
-    @Column(name = "target_amount", nullable = false)
-    var targetAmount: Int,  // var로 변경 (수정 가능)
-
-    @Column(name = "is_active", nullable = false)
-    var active: Boolean = true,
+    @Column(nullable = false, length = 30)
+    var status: UserBookStatus = UserBookStatus.WANT_TO_READ,
 
     @Column(name = "created_at", nullable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+    val createdAt: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: OffsetDateTime = OffsetDateTime.now()
 )
 
-enum class GoalPeriod {
-    DAILY,
-    WEEKLY,
-    MONTHLY
-}
-
-enum class GoalMetric {
-    TIME,
-    PAGE
+enum class UserBookStatus {
+    WANT_TO_READ,
+    READING,
+    FINISHED,
+    STOPPED,
 }

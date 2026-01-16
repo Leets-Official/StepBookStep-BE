@@ -8,11 +8,12 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "reading_goals")
-class ReadingGoal(
+@Table(name = "reading_logs")
+class ReadingLog(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
@@ -24,30 +25,27 @@ class ReadingGoal(
     val bookId: Long,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var period: GoalPeriod,  // var로 변경 (수정 가능)
+    @Column(name = "book_status", nullable = false, length = 20)
+    val bookStatus: ReadingLogStatus,
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var metric: GoalMetric,  // var로 변경 (수정 가능)
+    @Column(name = "record_date", nullable = false)
+    val recordDate: LocalDate,
 
-    @Column(name = "target_amount", nullable = false)
-    var targetAmount: Int,  // var로 변경 (수정 가능)
+    @Column(name = "read_quantity")
+    val readQuantity: Int? = null,
 
-    @Column(name = "is_active", nullable = false)
-    var active: Boolean = true,
+    @Column(name = "duration_seconds")
+    val durationSeconds: Int? = null,
+
+    @Column(length = 50)
+    val difficulty: String? = null,
 
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now()
 )
 
-enum class GoalPeriod {
-    DAILY,
-    WEEKLY,
-    MONTHLY
-}
-
-enum class GoalMetric {
-    TIME,
-    PAGE
+enum class ReadingLogStatus {
+    READING,
+    FINISHED,
+    STOPPED,
 }
