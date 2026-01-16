@@ -23,9 +23,29 @@ jobs:
       - name: Grant execute permission for Gradle
         run: chmod +x gradlew
 
+      - name: Generate application.yml for Test
+        run: |
+          mkdir -p src/main/resources
+          mkdir -p src/test/resources
+          cat <<EOF > src/main/resources/application.yml
+          stepbookstep:
+            jwt:
+              key: "${{ secrets.JWT_KEY }}"
+              access:
+                expiration: 3600000
+              refresh:
+                expiration: 86400000
+          spring:
+            datasource:
+              url: jdbc:h2:mem:testdb
+              driver-class-name: org.h2.Driver
+          EOF
+          cp src/main/resources/application.yml src/test/resources/application.yml
+
       - name: Build project
         run: ./gradlew clean build -x test
 
       - name: Run tests
         run: ./gradlew test
+
 

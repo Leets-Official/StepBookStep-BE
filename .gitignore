@@ -76,4 +76,4 @@ secrets/
 
 ### Env ###
 .env*
-docker/.env*
+docker/.env.dev
