@@ -28,6 +28,7 @@ class HomeQueryService(
         return HomeResponse(
             genreBooks = GenreBooks.of(genre, genreBooks),
             recommendations = Recommendations.of(under200Books, bestsellerBooks)
+            // TODO: 독서 통계 부분은 추가 구현할 예정입니다.
         )
     }
 }
