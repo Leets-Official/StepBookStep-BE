@@ -120,6 +120,7 @@ class ReadingLogService(
                 readingGoalRepository.save(activeGoal)
             }
         }
+        //TODO: 중단 시 목표는 어떻게 처리하는지 확인 필요
 
         return log
     }
