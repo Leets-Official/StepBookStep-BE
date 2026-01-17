@@ -125,12 +125,8 @@ class ReadingGoalService(
         metric: GoalMetric,
         totalPages: Int
     ): Int {
-        val (startDate, endDate) = getPeriodDateRange(period)
-
-        // 기간 내 읽은 페이지 수
-        val readPages = readingLogRepository.sumReadQuantityByUserIdAndBookIdAndDateRange(
-            userId, bookId, startDate, endDate
-        ) ?: 0
+        // 전체 누적 읽은 페이지 수
+        val readPages = readingLogRepository.sumTotalReadQuantityByUserIdAndBookId(userId, bookId) ?: 0
 
         // 책의 총 페이지 대비 비율 계산 (0-100)
         return if (totalPages > 0) {
