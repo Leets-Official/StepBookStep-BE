@@ -3,7 +3,6 @@ package com.stepbookstep.server.domain.reading.presentation
 import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.reading.application.ReadingGoalService
 import com.stepbookstep.server.domain.reading.application.ReadingLogService
-import com.stepbookstep.server.domain.reading.presentation.dto.ActiveReadingGoalResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogRequest
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.ReadingGoalResponse
@@ -102,44 +101,22 @@ class ReadingController(
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
-    @Operation(summary = "활성 목표 목록", description = "사용자의 활성화된 독서 목표를 조회합니다.")
-    @GetMapping("/goals/active")
-    fun getActiveGoals(
-        @RequestHeader("Authorization", required = false) authorization: String?
-    ): ResponseEntity<ApiResponse<List<ActiveReadingGoalResponse>>> {
-        val userId = authenticatedUserResolver.getUserId(authorization)
-        val goalsWithProgress = readingGoalService.getActiveGoalsWithProgress(userId)
-
-        val bookIds = goalsWithProgress.map { it.goal.bookId }.distinct()
-        val books = bookRepository.findAllById(bookIds).associateBy { it.id }
-
-        val responses = goalsWithProgress.map { goalWithProgress ->
-            val goal = goalWithProgress.goal
-            val book = books[goal.bookId] ?: throw CustomException(ErrorCode.BOOK_NOT_FOUND)
-
-            val achievementRate = if (goal.targetAmount > 0) {
-                (goalWithProgress.currentProgress.toDouble() / goal.targetAmount * 100).coerceIn(0.0, 100.0)
-            } else {
-                0.0
-            }
-
-            ActiveReadingGoalResponse(
-                goalId = goal.id,
-                bookId = goal.bookId,
-                bookTitle = book.title,
-                bookAuthor = book.author,
-                period = goal.period,
-                metric = goal.metric,
-                targetAmount = goal.targetAmount,
-                currentProgress = goalWithProgress.currentProgress,
-                achievementRate = achievementRate
-            )
-        }
-
-        return ResponseEntity.ok(ApiResponse.ok(responses))
-    }
-
-    @Operation(summary = "독서 기록 생성", description = "독서 기록을 생성합니다.")
+    @Operation(
+        summary = "독서 기록 생성",
+        description = """
+            독서 기록을 생성합니다.
+            
+            [입력 규칙]
+            - READING 상태:
+              * readQuantity(읽은 페이지) 필수
+              * TIME 목표인 경우 durationSeconds(읽은 시간) 필수
+              * rating은 무시됨 (입력해도 저장 안 됨)
+            - FINISHED 상태:
+              * rating(1-5) 필수
+            - STOPPED 상태:
+              * rating(1-5) 필수
+        """
+    )
     @PostMapping("/books/{bookId}/reading-logs")
     fun createReadingLog(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,

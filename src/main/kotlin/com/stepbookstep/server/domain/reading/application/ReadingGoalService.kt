@@ -103,7 +103,11 @@ class ReadingGoalService(
         val goal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
             ?: return null
 
-        val currentProgress = calculateCurrentProgress(userId, bookId, goal.period, goal.metric)
+        val book = bookRepository.findById(bookId).orElseThrow {
+            CustomException(ErrorCode.BOOK_NOT_FOUND)
+        }
+
+        val currentProgress = calculateCurrentProgress(userId, bookId, goal.period, goal.metric, book.itemPage)
 
         return ReadingGoalWithProgress(
             goal = goal,
@@ -112,46 +116,27 @@ class ReadingGoalService(
     }
 
     /**
-     * 사용자의 모든 활성 목표 조회 (진행률 포함)
-     */
-    @Transactional(readOnly = true)
-    fun getActiveGoalsWithProgress(userId: Long): List<ReadingGoalWithProgress> {
-        val goals = readingGoalRepository.findAllByUserIdAndActiveTrue(userId)
-
-        return goals.map { goal ->
-            val currentProgress = calculateCurrentProgress(userId, goal.bookId, goal.period, goal.metric)
-            ReadingGoalWithProgress(
-                goal = goal,
-                currentProgress = currentProgress
-            )
-        }
-    }
-
-    /**
-     * 현재 진행률 계산
+     * 현재 진행률 계산 (책 전체 대비 읽은 비율 0-100)
      */
     private fun calculateCurrentProgress(
         userId: Long,
         bookId: Long,
         period: GoalPeriod,
-        metric: GoalMetric
+        metric: GoalMetric,
+        totalPages: Int
     ): Int {
         val (startDate, endDate) = getPeriodDateRange(period)
 
-        return when (metric) {
-            GoalMetric.TIME -> {
-                // 시간 기준: 초를 분으로 변환
-                val totalSeconds = readingLogRepository.sumDurationByUserIdAndBookIdAndDateRange(
-                    userId, bookId, startDate, endDate
-                ) ?: 0
-                totalSeconds / 60  // 분 단위로 변환
-            }
-            GoalMetric.PAGE -> {
-                // 페이지 기준
-                readingLogRepository.sumReadQuantityByUserIdAndBookIdAndDateRange(
-                    userId, bookId, startDate, endDate
-                ) ?: 0
-            }
+        // 기간 내 읽은 페이지 수
+        val readPages = readingLogRepository.sumReadQuantityByUserIdAndBookIdAndDateRange(
+            userId, bookId, startDate, endDate
+        ) ?: 0
+
+        // 책의 총 페이지 대비 비율 계산 (0-100)
+        return if (totalPages > 0) {
+            ((readPages.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+        } else {
+            0
         }
     }
 

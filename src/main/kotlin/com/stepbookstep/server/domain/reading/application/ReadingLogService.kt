@@ -45,19 +45,21 @@ class ReadingLogService(
                 val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
                     ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
 
-                // 목표 metric에 따른 검증
+                // 쪽수는 항상 필수
+                if (readQuantity == null) {
+                    throw CustomException(ErrorCode.INVALID_INPUT)
+                }
+
+                // 목표 metric에 따른 추가 검증
                 when (activeGoal.metric) {
                     GoalMetric.TIME -> {
-                        // 시간 목표: 쪽수 + 시간 둘 다 입력 가능, 최소 하나는 필수
-                        if (readQuantity == null && durationSeconds == null) {
+                        // 시간 목표: 시간도 필수
+                        if (durationSeconds == null) {
                             throw CustomException(ErrorCode.INVALID_INPUT)
                         }
                     }
                     GoalMetric.PAGE -> {
-                        // 쪽수 목표: 쪽수만 필수
-                        if (readQuantity == null) {
-                            throw CustomException(ErrorCode.INVALID_INPUT)
-                        }
+                        // 쪽수 목표: 쪽수만 있으면 됨 (이미 위에서 검증)
                     }
                 }
             }
@@ -67,8 +69,9 @@ class ReadingLogService(
                 }
             }
             STOPPED -> {
-                // STOPPED 로직 추가 필요
-                TODO()
+                if (rating == null || rating !in 1..5) {
+                    throw CustomException(ErrorCode.INVALID_INPUT)
+                }
             }
         }
 
@@ -97,7 +100,7 @@ class ReadingLogService(
             userBookRepository.save(userBook)
         }
 
-        return readingLogRepository.save(
+        val log = readingLogRepository.save(
             ReadingLog(
                 userId = userId,
                 bookId = bookId,
@@ -105,8 +108,19 @@ class ReadingLogService(
                 recordDate = recordDate,
                 readQuantity = readQuantity,
                 durationSeconds = durationSeconds,
-                rating = rating
+                rating = if (bookStatus == READING) null else rating  // READING 상태면 rating 무시
             )
         )
+
+        // 완독 시 활성 목표 자동 삭제
+        if (bookStatus == FINISHED) {
+            val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
+            if (activeGoal != null) {
+                activeGoal.active = false
+                readingGoalRepository.save(activeGoal)
+            }
+        }
+
+        return log
     }
 }

@@ -11,6 +11,5 @@ data class ActiveReadingGoalResponse(
     val period: GoalPeriod,
     val metric: GoalMetric,
     val targetAmount: Int,
-    val currentProgress: Int,
-    val achievementRate: Double
+    val currentProgress: Int        // PAGE의 경우 0-100 비율
 )
