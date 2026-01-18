@@ -19,4 +19,22 @@ interface BookRepository : JpaRepository<Book, Long> {
         WHERE b.title LIKE %:keyword% OR b.author LIKE %:keyword% OR b.publisher LIKE %:keyword%
     """)
     fun searchByKeyword(@Param("keyword") keyword: String): List<Book>
+
+    @Query(
+        value = "SELECT * FROM books_new WHERE genre = :genre ORDER BY RAND() LIMIT 20",
+        nativeQuery = true
+    )
+    fun findRandomByGenre(@Param("genre") genre: String): List<Book>
+
+    @Query(
+        value = "SELECT * FROM books_new WHERE item_page < 200 ORDER BY RAND() LIMIT 20",
+        nativeQuery = true
+    )
+    fun findUnder200Pages(): List<Book>
+
+    @Query(
+        value = "SELECT * FROM books_new WHERE is_bestseller = 1 ORDER BY RAND() LIMIT 20",
+        nativeQuery = true
+    )
+    fun findBestsellers(): List<Book>
 }

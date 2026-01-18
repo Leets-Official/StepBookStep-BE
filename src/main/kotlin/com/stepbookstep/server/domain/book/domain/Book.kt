@@ -9,6 +9,7 @@ import java.time.LocalDateTime
     name = "books_new",
     indexes = [
         Index(name = "idx_isbn13", columnList = "isbn13", unique = true),
+        Index(name = "idx_origin", columnList = "origin"),
         Index(name = "idx_genre", columnList = "genre"),
         Index(name = "idx_published_date", columnList = "pub_date"),
         Index(name = "idx_pub_year", columnList = "pub_year"),
@@ -61,9 +62,11 @@ class Book(
     val weight: Int = 0,
 
     // ===== 서비스 고유 필드 =====
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    val genre: BookGenre,
+    val origin: String,
+
+    @Column(nullable = false, length = 50)
+    val genre: String,
 
     @Column(nullable = false)
     val level: Int = 1,
@@ -71,6 +74,9 @@ class Book(
     @Enumerated(EnumType.STRING)
     @Column(name = "vocab_level", nullable = false, length = 20)
     val vocabLevel: VocabLevel = VocabLevel.EASY,
+
+    @Column(name = "is_bestseller", nullable = false)
+    val isBestseller: Boolean = false,
 
     // ===== 시스템 필드 =====
     @Column(name = "created_at", nullable = false, updatable = false)

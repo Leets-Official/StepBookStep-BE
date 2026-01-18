@@ -105,6 +105,7 @@ enum class ErrorCode(
     // 2000~2999 : 책 관련 에러
     // ========================
     BOOK_NOT_FOUND(2000, HttpStatus.NOT_FOUND, "해당하는 도서가 존재하지 않습니다."),
+    INVALID_GENRE_ID(2001, HttpStatus.BAD_REQUEST, "유효하지 않은 장르 ID입니다. (0~10)"),
 
 
     // ========================

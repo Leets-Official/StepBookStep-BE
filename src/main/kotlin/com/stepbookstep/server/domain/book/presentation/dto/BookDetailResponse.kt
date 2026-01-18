@@ -54,7 +54,7 @@ data class BookInfo(
                 "Lv.${book.level}",
                 "#${book.itemPage}p",
                 "#${book.vocabLevel.toDisplayName()}",
-                "#${book.genre.displayName}"
+                "#${book.genre}"
             )
         }
 
