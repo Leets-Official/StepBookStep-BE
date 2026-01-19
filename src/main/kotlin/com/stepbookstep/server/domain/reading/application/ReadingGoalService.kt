@@ -43,19 +43,19 @@ class ReadingGoalService(
 
         // UserBook 생성 또는 상태 업데이트
         val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
-            ?: userBookRepository.save(
-                UserBook(
-                    userId = userId,
-                    bookId = bookId,
-                    status = UserBookStatus.WANT_TO_READ
-                )
+            ?: UserBook(
+                userId = userId,
+                bookId = bookId,
+                status = UserBookStatus.READING
             )
 
         if (userBook.status != UserBookStatus.READING) {
             userBook.status = UserBookStatus.READING
             userBook.updatedAt = OffsetDateTime.now()
-            userBookRepository.save(userBook)
         }
+
+        userBookRepository.save(userBook)
+
 
         // 기존 활성 목표 조회
         val existingGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)

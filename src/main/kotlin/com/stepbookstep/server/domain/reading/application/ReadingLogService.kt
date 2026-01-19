@@ -35,64 +35,27 @@ class ReadingLogService(
         durationSeconds: Int?,
         rating: Int?
     ): ReadingLog {
-        if (!bookRepository.existsById(bookId)) {
-            throw CustomException(ErrorCode.BOOK_NOT_FOUND)
-        }
+        validateBookExists(bookId)
 
-        when (bookStatus) {
-            READING -> {
-                // 활성 목표 조회
-                val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
-                    ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
-
-                // 쪽수는 항상 필수
-                if (readQuantity == null) {
-                    throw CustomException(ErrorCode.INVALID_INPUT)
-                }
-
-                // 목표 metric에 따른 추가 검증
-                when (activeGoal.metric) {
-                    GoalMetric.TIME -> {
-                        // 시간 목표: 시간도 필수
-                        if (durationSeconds == null) {
-                            throw CustomException(ErrorCode.INVALID_INPUT)
-                        }
-                    }
-                    GoalMetric.PAGE -> {
-                        // 쪽수 목표: 쪽수만 있으면 됨 (이미 위에서 검증)
-                    }
-                }
-            }
-            FINISHED -> {
-                if (rating == null || rating !in 1..5) {
-                    throw CustomException(ErrorCode.INVALID_INPUT)
-                }
-            }
-            STOPPED -> {
-                if (rating == null || rating !in 1..5) {
-                    throw CustomException(ErrorCode.INVALID_INPUT)
-                }
-            }
-        }
+        val activeGoal = validateByStatus(
+            userId = userId,
+            bookId = bookId,
+            bookStatus = bookStatus,
+            readQuantity = readQuantity,
+            durationSeconds = durationSeconds,
+            rating = rating
+        )
 
         val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
             ?: userBookRepository.save(
                 UserBook(
                     userId = userId,
                     bookId = bookId,
-                    status = when (bookStatus) {
-                        READING -> UserBookStatus.READING
-                        FINISHED -> UserBookStatus.FINISHED
-                        STOPPED -> UserBookStatus.STOPPED
-                    }
+                    status = bookStatus.toUserBookStatus()
                 )
             )
 
-        val targetStatus = when (bookStatus) {
-            READING -> UserBookStatus.READING
-            FINISHED -> UserBookStatus.FINISHED
-            STOPPED -> UserBookStatus.STOPPED
-        }
+        val targetStatus = bookStatus.toUserBookStatus()
 
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
@@ -108,20 +71,95 @@ class ReadingLogService(
                 recordDate = recordDate,
                 readQuantity = readQuantity,
                 durationSeconds = durationSeconds,
-                rating = if (bookStatus == READING) null else rating  // READING 상태면 rating 무시
+                rating = if (bookStatus == READING) null else rating
             )
         )
 
-        // 완독 시 활성 목표 자동 삭제
         if (bookStatus == FINISHED) {
-            val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
-            if (activeGoal != null) {
-                activeGoal.active = false
-                readingGoalRepository.save(activeGoal)
-            }
+            deactivateActiveGoalIfExists(userId, bookId)
         }
-        //TODO: 중단 시 목표는 어떻게 처리하는지 확인 필요
 
         return log
+    }
+
+    private fun validateBookExists(bookId: Long) {
+        if (!bookRepository.existsById(bookId)) {
+            throw CustomException(ErrorCode.BOOK_NOT_FOUND)
+        }
+    }
+
+    /**
+     * 상태별 검증.
+     * READING이면 activeGoal을 반환해서 아래 로직(필요시)에 재사용 가능하게 할 수도 있음.
+     */
+    private fun validateByStatus(
+        userId: Long,
+        bookId: Long,
+        bookStatus: ReadingLogStatus,
+        readQuantity: Int?,
+        durationSeconds: Int?,
+        rating: Int?
+    ) = when (bookStatus) {
+        READING -> validateReadingLog(userId, bookId, readQuantity, durationSeconds)
+        FINISHED -> {
+            validateRating(rating)
+            null
+        }
+        STOPPED -> {
+            validateRating(rating)
+            null
+        }
+    }
+
+    private fun validateReadingLog(
+        userId: Long,
+        bookId: Long,
+        readQuantity: Int?,
+        durationSeconds: Int?
+    ) = run {
+        val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
+            ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
+
+        requireReadQuantity(readQuantity)
+        validateByGoalMetric(activeGoal.metric, durationSeconds)
+
+        activeGoal
+    }
+
+    private fun requireReadQuantity(readQuantity: Int?) {
+        if (readQuantity == null) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+    }
+
+    private fun validateByGoalMetric(metric: GoalMetric, durationSeconds: Int?) {
+        when (metric) {
+            GoalMetric.TIME -> {
+                if (durationSeconds == null) {
+                    throw CustomException(ErrorCode.INVALID_INPUT)
+                }
+            }
+            GoalMetric.PAGE -> Unit
+        }
+    }
+
+    private fun validateRating(rating: Int?) {
+        if (rating == null || rating !in 1..5) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+    }
+
+    private fun deactivateActiveGoalIfExists(userId: Long, bookId: Long) {
+        val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
+        if (activeGoal != null) {
+            activeGoal.active = false
+            readingGoalRepository.save(activeGoal)
+        }
+    }
+
+    private fun ReadingLogStatus.toUserBookStatus(): UserBookStatus = when (this) {
+        READING -> UserBookStatus.READING
+        FINISHED -> UserBookStatus.FINISHED
+        STOPPED -> UserBookStatus.STOPPED
     }
 }
