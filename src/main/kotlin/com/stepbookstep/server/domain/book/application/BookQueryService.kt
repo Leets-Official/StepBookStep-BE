@@ -10,12 +10,13 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class BookQueryService(
-    private val bookRepository: BookRepository
+    private val bookRepository: BookRepository,
+    private val bookCacheService: BookCacheService
 ) {
 
     fun findById(id: Long): Book {
-        return bookRepository.findById(id)
-            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND, null) }
+        return bookCacheService.getBookDetail(id)
+            ?: throw CustomException(ErrorCode.BOOK_NOT_FOUND, null)
     }
 
     fun search(keyword: String?, level: Int): List<Book> {

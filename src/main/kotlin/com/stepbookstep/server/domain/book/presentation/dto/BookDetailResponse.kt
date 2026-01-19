@@ -44,26 +44,31 @@ data class BookInfo(
                 priceStandard = book.priceStandard,
                 link = book.aladinLink,
                 description = book.description,
-                tags = buildTags(book)
+                tags = BookTagBuilder.buildTags(book)
             )
         }
+    }
+}
 
-        // TODO: 태그 키워드가 정해지면 리팩토링할 예정입니다.
-        private fun buildTags(book: Book): List<String> {
-            return listOf(
-                "Lv.${book.level}",
-                "#${book.itemPage}p",
-                "#${book.vocabLevel.toDisplayName()}",
-                "#${book.genre}"
-            )
-        }
-
-        private fun com.stepbookstep.server.domain.book.domain.VocabLevel.toDisplayName(): String {
-            return when (this) {
-                com.stepbookstep.server.domain.book.domain.VocabLevel.EASY -> "쉬운어휘"
-                com.stepbookstep.server.domain.book.domain.VocabLevel.NORMAL -> "보통어휘"
-                com.stepbookstep.server.domain.book.domain.VocabLevel.HARD -> "어려운어휘"
+object BookTagBuilder {
+    fun buildTags(book: Book): List<String> {
+        return buildList {
+            add(getPageRangeTag(book.itemPage))
+            add(book.origin)
+            if (!book.genre.isNullOrBlank()) {
+                add(book.genre)
             }
+        }
+    }
+
+    private fun getPageRangeTag(page: Int): String {
+        return when {
+            page <= 200 -> "~200"
+            page <= 250 -> "201~250"
+            page <= 350 -> "251~350"
+            page <= 500 -> "351~500"
+            page <= 650 -> "501~650"
+            else -> "651~"
         }
     }
 }
