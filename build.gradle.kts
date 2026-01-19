@@ -46,12 +46,19 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
 
+    // Jackson Java 8 Date/Time
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
     // DB 의존성
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+
+    // Redis & Cache
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-webclient")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     testImplementation("io.projectreactor:reactor-test")
-    runtimeOnly("com.mysql:mysql-connector-j")
+    runtimeOnly("com.mysql:mysql-connector-j:8.3.0")
     testRuntimeOnly("com.h2database:h2")
 
     // Dev
@@ -88,4 +95,8 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    testLogging {
+        showStandardStreams = true
+        events("passed", "skipped", "failed")
+    }
 }
