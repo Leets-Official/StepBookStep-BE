@@ -39,7 +39,7 @@ class ReadingGoalService(
     ): ReadingGoal {
         // targetAmount 검증
         if (targetAmount <= 0) {
-            throw CustomException(ErrorCode.INVALID_INPUT)
+            throw CustomException(ErrorCode.TARGET_AMOUNT_INVALID)
         }
 
         if (!bookRepository.existsById(bookId)) {
@@ -155,7 +155,7 @@ class ReadingGoalService(
         totalPages: Int
     ): Int {
         // 전체 누적 읽은 페이지 수
-        val readPages = readingLogRepository.sumTotalReadQuantityByUserIdAndBookId(userId, bookId) ?: 0
+        val readPages = readingLogRepository.sumTotalReadQuantityByUserIdAndBookId(userId, bookId)
 
         // 책의 총 페이지 대비 비율 계산 (0-100)
         return if (totalPages > 0) {

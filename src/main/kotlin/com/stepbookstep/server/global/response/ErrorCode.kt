@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus
  * 1000~1999 : 유저 관련 에러
  * 2000~2999 : 책 관련 에러
  * 3000~3999 : 루틴 관련 에러
+ * 4000~4999 : 검색어 관련 에러
+ * 5000~5999 : 독서 기록/목표 관련 에러  <-- 추가
  * 10000 이상 : 기타 파라미터 등
  */
 enum class ErrorCode(
@@ -117,7 +119,17 @@ enum class ErrorCode(
     // 4000~4999 : 검색어 관련 에러
     // ========================
     NOT_SEARCH(4000, HttpStatus.NOT_FOUND, "해당하는 검색 정보가 존재하지 않습니다."),
-    INVALID_SORT_TYPE(4001, HttpStatus.BAD_REQUEST, "잘못된 정렬 방식입니다.");
+    INVALID_SORT_TYPE(4001, HttpStatus.BAD_REQUEST, "잘못된 정렬 방식입니다."),
+
+
+    // ========================
+    // 5000~5999 : 독서 기록/목표 관련 에러
+    // ========================
+    READ_QUANTITY_REQUIRED(5000, HttpStatus.BAD_REQUEST, "읽은 페이지 수를 입력해주세요."),
+    DURATION_REQUIRED(5001, HttpStatus.BAD_REQUEST, "독서 시간을 입력해주세요."),
+    RATING_REQUIRED(5002, HttpStatus.BAD_REQUEST, "평점을 입력해주세요."),
+    INVALID_RATING(5003, HttpStatus.BAD_REQUEST, "평점은 1-5 사이여야 합니다."),
+    TARGET_AMOUNT_INVALID(5004, HttpStatus.BAD_REQUEST, "목표량은 1 이상이어야 합니다.");
 
     companion object {
         /**

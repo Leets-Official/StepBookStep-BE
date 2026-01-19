@@ -121,23 +121,22 @@ class ReadingLogService(
         val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
             ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
 
-        requireReadQuantity(readQuantity)
+        // 읽은 페이지 필수 검증
+        if (readQuantity == null) {
+            throw CustomException(ErrorCode.READ_QUANTITY_REQUIRED)
+        }
+
+        // 목표 metric에 따른 추가 검증
         validateByGoalMetric(activeGoal.metric, durationSeconds)
 
         activeGoal
-    }
-
-    private fun requireReadQuantity(readQuantity: Int?) {
-        if (readQuantity == null) {
-            throw CustomException(ErrorCode.INVALID_INPUT)
-        }
     }
 
     private fun validateByGoalMetric(metric: GoalMetric, durationSeconds: Int?) {
         when (metric) {
             GoalMetric.TIME -> {
                 if (durationSeconds == null) {
-                    throw CustomException(ErrorCode.INVALID_INPUT)
+                    throw CustomException(ErrorCode.DURATION_REQUIRED)
                 }
             }
             GoalMetric.PAGE -> Unit
@@ -145,8 +144,9 @@ class ReadingLogService(
     }
 
     private fun validateRating(rating: Int?) {
-        if (rating == null || rating !in 1..5) {
-            throw CustomException(ErrorCode.INVALID_INPUT)
+        when {
+            rating == null -> throw CustomException(ErrorCode.RATING_REQUIRED)
+            rating !in 1..5 -> throw CustomException(ErrorCode.INVALID_RATING)
         }
     }
 
