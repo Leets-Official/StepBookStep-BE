@@ -20,7 +20,7 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
     fun sumTotalReadQuantityByUserIdAndBookId(
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long
-    ): Int?
+    ): Int
 
     /**
      * 특정 기간 동안 사용자가 읽은 총 페이지 수 합계
@@ -38,7 +38,7 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         @Param("bookId") bookId: Long,
         @Param("startDate") startDate: LocalDate,
         @Param("endDate") endDate: LocalDate
-    ): Int?
+    ): Int
 
     /**
      * 특정 기간 동안 사용자가 읽은 총 시간(초) 합계
@@ -56,5 +56,5 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         @Param("bookId") bookId: Long,
         @Param("startDate") startDate: LocalDate,
         @Param("endDate") endDate: LocalDate
-    ): Int?
+    ): Int
 }
