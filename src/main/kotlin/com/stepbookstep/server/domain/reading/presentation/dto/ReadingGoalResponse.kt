@@ -13,7 +13,8 @@ data class ReadingGoalResponse(
     val targetAmount: Int,
     val currentProgress: Int,        // 책 전체 대비 읽은 비율 (0-100)
     val isActive: Boolean,
-    val createdAt: OffsetDateTime
+    val createdAt: OffsetDateTime,
+    val updatedAt: OffsetDateTime
 ) {
     companion object {
         fun from(
@@ -28,7 +29,8 @@ data class ReadingGoalResponse(
                 targetAmount = goal.targetAmount,
                 currentProgress = currentProgress,
                 isActive = goal.active,
-                createdAt = goal.createdAt
+                createdAt = goal.createdAt,
+                updatedAt = goal.updatedAt
             )
         }
     }

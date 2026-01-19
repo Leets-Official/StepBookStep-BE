@@ -38,7 +38,10 @@ class ReadingGoal(
     var active: Boolean = true,
 
     @Column(name = "created_at", nullable = false)
-    val createdAt: OffsetDateTime = OffsetDateTime.now()
+    val createdAt: OffsetDateTime = OffsetDateTime.now(),
+
+    @Column(name = "updated_at", nullable = false)
+    var updatedAt: OffsetDateTime = OffsetDateTime.now()
 )
 
 enum class GoalPeriod {

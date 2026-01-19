@@ -154,6 +154,7 @@ class ReadingLogService(
         val activeGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
         if (activeGoal != null) {
             activeGoal.active = false
+            activeGoal.updatedAt = OffsetDateTime.now()
             readingGoalRepository.save(activeGoal)
         }
     }

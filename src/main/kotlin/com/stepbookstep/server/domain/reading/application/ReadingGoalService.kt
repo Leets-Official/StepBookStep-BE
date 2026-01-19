@@ -66,6 +66,7 @@ class ReadingGoalService(
                 this.period = period
                 this.metric = metric
                 this.targetAmount = targetAmount
+                this.updatedAt = OffsetDateTime.now()
             }
             readingGoalRepository.save(existingGoal)
         } else {
@@ -92,6 +93,7 @@ class ReadingGoalService(
             ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
 
         existingGoal.active = false
+        existingGoal.updatedAt = OffsetDateTime.now()
         readingGoalRepository.save(existingGoal)
     }
 
