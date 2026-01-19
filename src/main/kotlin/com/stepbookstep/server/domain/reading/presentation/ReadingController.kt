@@ -82,14 +82,14 @@ class ReadingController(
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
-    @Operation(summary = "책 목표 조회", description = "특정 책의 현재 활성화된 독서 목표를 조회합니다.")
+    @Operation(summary = "책 목표 조회", description = "특정 책의 독서 목표를 조회합니다. 완독/중지 상태에서도 비활성화된 목표를 표시합니다.")
     @GetMapping("/books/{bookId}/goals")
     fun getGoal(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
         @RequestHeader("Authorization", required = false) authorization: String?
     ): ResponseEntity<ApiResponse<ReadingGoalResponse?>> {
         val userId = authenticatedUserResolver.getUserId(authorization)
-        val goalWithProgress = readingGoalService.getActiveGoalWithProgress(userId, bookId)
+        val goalWithProgress = readingGoalService.getGoalWithProgress(userId, bookId)
 
         val response = goalWithProgress?.let {
             ReadingGoalResponse.from(

@@ -75,7 +75,8 @@ class ReadingLogService(
             )
         )
 
-        if (bookStatus == FINISHED) {
+        // 완독 또는 중지 시 활성 목표 비활성화
+        if (bookStatus == FINISHED || bookStatus == STOPPED) {
             deactivateActiveGoalIfExists(userId, bookId)
         }
 

@@ -116,6 +116,28 @@ class ReadingGoalService(
     }
 
     /**
+     * 특정 책의 목표 조회 (활성/비활성 무관, 진행률 포함)
+     * - 완독/중지 상태에서도 목표를 표시하기 위해 사용
+     * - 가장 최근 목표를 조회
+     */
+    @Transactional(readOnly = true)
+    fun getGoalWithProgress(userId: Long, bookId: Long): ReadingGoalWithProgress? {
+        val goal = readingGoalRepository.findTopByUserIdAndBookIdOrderByCreatedAtDesc(userId, bookId)
+            ?: return null
+
+        val book = bookRepository.findById(bookId).orElseThrow {
+            CustomException(ErrorCode.BOOK_NOT_FOUND)
+        }
+
+        val currentProgress = calculateCurrentProgress(userId, bookId, goal.period, goal.metric, book.itemPage)
+
+        return ReadingGoalWithProgress(
+            goal = goal,
+            currentProgress = currentProgress
+        )
+    }
+
+    /**
      * 현재 진행률 계산 (책 전체 대비 읽은 비율 0-100)
      */
     private fun calculateCurrentProgress(
