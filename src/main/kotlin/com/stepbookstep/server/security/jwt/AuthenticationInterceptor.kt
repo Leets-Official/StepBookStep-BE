@@ -1,5 +1,7 @@
 package com.stepbookstep.server.security.jwt
 
+import com.stepbookstep.server.global.response.CustomException
+import com.stepbookstep.server.global.response.ErrorCode
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.stereotype.Component
@@ -14,19 +16,36 @@ class AuthenticationInterceptor(
     private val jwtProvider: JwtProvider
 ) : HandlerInterceptor {
 
-    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        // 1. 헤더에서 Authorization: Bearer {토큰} 추출
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any
+    ): Boolean {
+
         val authHeader = request.getHeader("Authorization")
+            ?: throw CustomException(ErrorCode.TOKEN_NOT_FOUND)
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            val token = authHeader.substring(7)
-
-            // 2. 토큰이 유효하면 userId를 추출해서 request에 세팅
-            if (!jwtProvider.isExpired(token)) {
-                val userId = jwtProvider.getUserId(token)
-                request.setAttribute("userId", userId)
-            }
+        if (!authHeader.startsWith("Bearer ")) {
+            throw CustomException(ErrorCode.TOKEN_UNSUPPORTED)
         }
+
+        val token = authHeader.substring(7)
+
+        // 만료 여부 체크
+        if (jwtProvider.isExpired(token)) {
+            throw CustomException(ErrorCode.TOKEN_EXPIRED)
+        }
+
+        // 토큰에서 userId 추출 (위조 / 파싱 실패 대비)
+        val userId = try {
+            jwtProvider.getUserId(token)
+        } catch (e: Exception) {
+            throw CustomException(ErrorCode.TOKEN_INVALID)
+        }
+
+        request.setAttribute("userId", userId)
         return true
     }
 }
+
+
