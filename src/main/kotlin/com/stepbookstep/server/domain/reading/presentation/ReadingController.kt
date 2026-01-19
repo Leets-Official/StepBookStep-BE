@@ -14,6 +14,7 @@ import com.stepbookstep.server.security.jwt.AuthenticatedUserResolver
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -47,7 +48,7 @@ class ReadingController(
     fun upsertOrDeleteGoal(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
         @RequestHeader("Authorization", required = false) authorization: String?,
-        @RequestBody request: UpsertReadingGoalRequest
+        @Valid @RequestBody request: UpsertReadingGoalRequest
     ): ResponseEntity<ApiResponse<ReadingGoalResponse?>> {
         val userId = authenticatedUserResolver.getUserId(authorization)
 
@@ -121,7 +122,7 @@ class ReadingController(
     fun createReadingLog(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
         @RequestHeader("Authorization", required = false) authorization: String?,
-        @RequestBody request: CreateReadingLogRequest
+        @Valid @RequestBody request: CreateReadingLogRequest
     ): ResponseEntity<ApiResponse<CreateReadingLogResponse>> {
         val userId = authenticatedUserResolver.getUserId(authorization)
         val log = readingLogService.createLog(

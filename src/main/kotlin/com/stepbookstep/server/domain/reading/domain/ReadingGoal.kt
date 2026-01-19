@@ -8,6 +8,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import jakarta.validation.constraints.Positive
 import java.time.OffsetDateTime
 
 @Entity
@@ -29,10 +30,11 @@ class ReadingGoal(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var metric: GoalMetric,  // var로 변경 (수정 가능)
+    var metric: GoalMetric,
 
+    @field:Positive(message = "목표량은 1 이상이어야 합니다")
     @Column(name = "target_amount", nullable = false)
-    var targetAmount: Int,  // var로 변경 (수정 가능)
+    var targetAmount: Int,
 
     @Column(name = "is_active", nullable = false)
     var active: Boolean = true,

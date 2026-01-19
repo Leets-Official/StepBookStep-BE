@@ -37,6 +37,11 @@ class ReadingGoalService(
         metric: GoalMetric,
         targetAmount: Int
     ): ReadingGoal {
+        // targetAmount 검증
+        if (targetAmount <= 0) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+
         if (!bookRepository.existsById(bookId)) {
             throw CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
