@@ -11,7 +11,7 @@ enum class BookOrigin(val displayName: String) {
 
 enum class BookGenre(val displayName: String) {
     MYSTERY("추리/미스터리"),
-    LIGHT_NOVEL("라이트 노벨"),
+    LIGHT_NOVEL("라이트노벨"),
     FANTASY("판타지/환상문학"),
     HISTORICAL("역사소설"),
     SF("과학소설(SF)"),
@@ -19,6 +19,5 @@ enum class BookGenre(val displayName: String) {
     MARTIAL_ARTS("무협소설"),
     ACTION_THRILLER("액션/스릴러"),
     ROMANCE("로맨스"),
-    POETRY("시"),
     DRAMA("희곡")
 }
