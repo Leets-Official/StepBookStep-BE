@@ -5,6 +5,7 @@ import com.stepbookstep.server.domain.reading.domain.GoalMetric
 import com.stepbookstep.server.domain.reading.domain.GoalPeriod
 import com.stepbookstep.server.domain.reading.domain.ReadingGoal
 import com.stepbookstep.server.domain.reading.domain.ReadingGoalRepository
+import com.stepbookstep.server.domain.reading.domain.ReadingLog
 import com.stepbookstep.server.domain.reading.domain.ReadingLogRepository
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
@@ -190,6 +191,8 @@ class ReadingGoalService(
 
     /**
      * 현재 기간에 달성한 양 계산
+     * - PAGE: 기간 내 첫 기록과 마지막 기록의 페이지 차이
+     * - TIME: 기간 내 총 독서 시간 합계
      */
     private fun calculateAchievedAmount(
         userId: Long,
@@ -201,12 +204,41 @@ class ReadingGoalService(
 
         return when (metric) {
             GoalMetric.PAGE -> {
-                readingLogRepository.sumReadQuantityByUserIdAndBookIdAndDateRange(
+                val firstRecord = readingLogRepository.findFirstRecordInDateRange(
                     userId = userId,
                     bookId = bookId,
                     startDate = startDate,
                     endDate = endDate
                 )
+
+                val lastRecord = readingLogRepository.findLastRecordInDateRange(
+                    userId = userId,
+                    bookId = bookId,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+
+                when {
+                    // 기록이 없는 경우
+                    firstRecord == null || lastRecord == null -> 0
+
+                    // 기록이 1개만 있는 경우 (같은 날 첫 기록)
+                    firstRecord.id == lastRecord.id -> {
+                        // 기간 시작 전 마지막 기록을 찾아서 차이 계산
+                        val previousRecord = findLastRecordBeforeDate(userId, bookId, startDate)
+                        if (previousRecord != null) {
+                            (lastRecord.readQuantity!! - previousRecord.readQuantity!!).coerceAtLeast(0)
+                        } else {
+                            // 이전 기록이 없으면 현재 위치가 곧 읽은 양
+                            lastRecord.readQuantity ?: 0
+                        }
+                    }
+
+                    // 기록이 여러 개 있는 경우: 마지막 - 첫 번째
+                    else -> {
+                        (lastRecord.readQuantity!! - firstRecord.readQuantity!!).coerceAtLeast(0)
+                    }
+                }
             }
             GoalMetric.TIME -> {
                 val durationSeconds = readingLogRepository.sumDurationByUserIdAndBookIdAndDateRange(
@@ -219,6 +251,23 @@ class ReadingGoalService(
                 durationSeconds / 60
             }
         }
+    }
+
+    /**
+     * 특정 날짜 이전의 마지막 기록 조회
+     */
+    private fun findLastRecordBeforeDate(
+        userId: Long,
+        bookId: Long,
+        beforeDate: LocalDate
+    ): ReadingLog? {
+        // 기간 시작 전날까지의 기록 중 가장 최근 기록
+        return readingLogRepository.findLastRecordInDateRange(
+            userId = userId,
+            bookId = bookId,
+            startDate = LocalDate.of(2000, 1, 1), // 충분히 과거 날짜
+            endDate = beforeDate.minusDays(1)
+        )
     }
 
     /**
