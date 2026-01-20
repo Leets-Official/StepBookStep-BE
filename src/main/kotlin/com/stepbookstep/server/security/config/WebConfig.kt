@@ -16,7 +16,7 @@ class WebConfig(
 
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authenticationInterceptor)
-            // 헬스체크, 스웨거 제외 userId 여부로 판단됩니다.
-            .excludePathPatterns("/health", "/swagger-ui/**", "/v3/api-docs/**")
+            .addPathPatterns("/api/**")
+            .excludePathPatterns("/health", "/swagger-ui/**", "/v3/api-docs/**", "/api/v1/auth/**")
     }
 }
