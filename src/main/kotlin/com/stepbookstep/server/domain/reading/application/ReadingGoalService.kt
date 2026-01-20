@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.OffsetDateTime
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class ReadingGoalService(
@@ -145,6 +146,37 @@ class ReadingGoalService(
     }
 
     /**
+     * 사용자의 모든 활성 목표 조회 (루틴 목록)
+     */
+    @Transactional(readOnly = true)
+    fun getAllActiveRoutines(userId: Long): List<RoutineWithDetails> {
+        val activeGoals = readingGoalRepository.findAllByUserIdAndActiveTrue(userId)
+
+        return activeGoals.mapNotNull { goal ->
+            val book = bookRepository.findById(goal.bookId).getOrNull() ?: return@mapNotNull null
+            val userBook = userBookRepository.findByUserIdAndBookId(userId, goal.bookId) ?: return@mapNotNull null
+
+            val currentProgress = calculateCurrentProgress(
+                userId = userId,
+                bookId = goal.bookId,
+                period = goal.period,
+                metric = goal.metric,
+                totalPages = book.itemPage
+            )
+
+            RoutineWithDetails(
+                goal = goal,
+                bookTitle = book.title,
+                bookAuthor = book.author,
+                bookCoverImage = book.coverUrl,
+                bookTotalPages = book.itemPage,
+                bookStatus = userBook.status,
+                currentProgress = currentProgress
+            )
+        }
+    }
+
+    /**
      * 현재 진행률 계산 (책 전체 대비 읽은 비율 0-100)
      */
     private fun calculateCurrentProgress(
@@ -192,5 +224,18 @@ class ReadingGoalService(
  */
 data class ReadingGoalWithProgress(
     val goal: ReadingGoal,
+    val currentProgress: Int
+)
+
+/**
+ * 루틴 목록용 상세 정보가 포함된 목표 데이터 클래스
+ */
+data class RoutineWithDetails(
+    val goal: ReadingGoal,
+    val bookTitle: String,
+    val bookAuthor: String,
+    val bookCoverImage: String?,
+    val bookTotalPages: Int,
+    val bookStatus: UserBookStatus,
     val currentProgress: Int
 )
