@@ -22,7 +22,7 @@ data class BookSearchResponse(
                 publisher = book.publisher,
                 pubDate = book.pubYear.toString(),
                 totalPage = book.itemPage,
-                tags = emptyList() // 태그 키워드가 정해지면 추가할 예정입니다.
+                tags = BookTagBuilder.buildTags(book)
             )
         }
     }

@@ -1,7 +1,6 @@
 package com.stepbookstep.server.domain.home.application
 
 import com.stepbookstep.server.domain.book.domain.BookGenre
-import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.home.presentation.dto.GenreBooks
 import com.stepbookstep.server.domain.home.presentation.dto.HomeResponse
 import com.stepbookstep.server.domain.home.presentation.dto.Recommendations
@@ -13,17 +12,23 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 @Transactional(readOnly = true)
 class HomeQueryService(
-    private val bookRepository: BookRepository
+    private val homeCacheService: HomeCacheService
 ) {
 
-    fun getHome(genreId: Int?): HomeResponse {
-        val genre = genreId?.let {
-            BookGenre.entries.getOrNull(it) ?: throw CustomException(ErrorCode.INVALID_GENRE_ID)
-        } ?: BookGenre.entries.first()
+    fun getHome(genreIds: List<Int>?): HomeResponse {
+        val genre = when {
+            genreIds.isNullOrEmpty() -> BookGenre.entries.random()
+            else -> {
+                val hasInvalidId = genreIds.any { it < 0 || it >= BookGenre.entries.size }
+                if (hasInvalidId) throw CustomException(ErrorCode.INVALID_GENRE_ID)
+                val genres = genreIds.map { BookGenre.entries[it] }
+                genres.random()
+            }
+        }
 
-        val genreBooks = bookRepository.findRandomByGenre(genre.displayName)
-        val under200Books = bookRepository.findUnder200Pages()
-        val bestsellerBooks = bookRepository.findBestsellers()
+        val genreBooks = homeCacheService.getGenreBooks(genre.displayName)
+        val under200Books = homeCacheService.getUnder200Books()
+        val bestsellerBooks = homeCacheService.getBestsellerBooks()
 
         return HomeResponse(
             genreBooks = GenreBooks.of(genre, genreBooks),
