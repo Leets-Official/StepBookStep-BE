@@ -59,7 +59,6 @@ class ReadingController(
                 bookPublishYear = routine.bookPublishYear,
                 bookTotalPages = routine.bookTotalPages,
                 bookStatus = routine.bookStatus,
-                currentProgress = routine.currentProgress,
                 achievedAmount = routine.achievedAmount
             )
         }

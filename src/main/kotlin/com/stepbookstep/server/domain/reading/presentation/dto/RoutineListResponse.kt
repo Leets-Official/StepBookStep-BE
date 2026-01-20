@@ -39,7 +39,6 @@ data class RoutineItem(
             bookPublishYear: Int?,
             bookTotalPages: Int,
             bookStatus: UserBookStatus,
-            currentProgress: Int,
             achievedAmount: Int
         ): RoutineItem {
             val remainingAmount = (goal.targetAmount - achievedAmount).coerceAtLeast(0)

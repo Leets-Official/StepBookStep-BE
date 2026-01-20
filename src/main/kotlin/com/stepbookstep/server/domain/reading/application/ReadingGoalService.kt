@@ -147,10 +147,11 @@ class ReadingGoalService(
 
     /**
      * 사용자의 모든 활성 목표 조회 (루틴 목록)
+     * 최근 생성순으로 정렬
      */
     @Transactional(readOnly = true)
     fun getAllActiveRoutines(userId: Long): List<RoutineWithDetails> {
-        val activeGoals = readingGoalRepository.findAllByUserIdAndActiveTrue(userId)
+        val activeGoals = readingGoalRepository.findAllByUserIdAndActiveTrueOrderByCreatedAtDesc(userId)
 
         return activeGoals.mapNotNull { goal ->
             val book = bookRepository.findById(goal.bookId).getOrNull() ?: return@mapNotNull null
