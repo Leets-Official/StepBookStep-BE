@@ -99,6 +99,25 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
     ): Int
 
     /**
+     * 특정 날짜 이전의 마지막 기록 조회
+     */
+    @Query("""
+        SELECT rl
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookId = :bookId
+        AND rl.recordDate < :beforeDate
+        AND rl.readQuantity IS NOT NULL
+        ORDER BY rl.recordDate DESC, rl.createdAt DESC
+        LIMIT 1
+    """)
+    fun findLastRecordBeforeDate(
+        @Param("userId") userId: Long,
+        @Param("bookId") bookId: Long,
+        @Param("beforeDate") beforeDate: LocalDate
+    ): ReadingLog?
+
+    /**
      * 사용자의 특정 책에 대한 가장 최근 기록 조회
      */
     @Query("""
