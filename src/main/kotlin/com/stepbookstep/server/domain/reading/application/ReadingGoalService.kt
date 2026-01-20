@@ -164,15 +164,59 @@ class ReadingGoalService(
                 totalPages = book.itemPage
             )
 
+            // 현재 기간에 달성한 양 계산
+            val achievedAmount = calculateAchievedAmount(
+                userId = userId,
+                bookId = goal.bookId,
+                period = goal.period,
+                metric = goal.metric
+            )
+
             RoutineWithDetails(
                 goal = goal,
                 bookTitle = book.title,
                 bookAuthor = book.author,
                 bookCoverImage = book.coverUrl,
+                bookPublisher = book.publisher,
+                bookPublishYear = book.pubYear,
                 bookTotalPages = book.itemPage,
                 bookStatus = userBook.status,
-                currentProgress = currentProgress
+                currentProgress = currentProgress,
+                achievedAmount = achievedAmount
             )
+        }
+    }
+
+    /**
+     * 현재 기간에 달성한 양 계산
+     */
+    private fun calculateAchievedAmount(
+        userId: Long,
+        bookId: Long,
+        period: GoalPeriod,
+        metric: GoalMetric
+    ): Int {
+        val (startDate, endDate) = getPeriodDateRange(period)
+
+        return when (metric) {
+            GoalMetric.PAGE -> {
+                readingLogRepository.sumReadQuantityByUserIdAndBookIdAndDateRange(
+                    userId = userId,
+                    bookId = bookId,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+            }
+            GoalMetric.TIME -> {
+                val durationSeconds = readingLogRepository.sumDurationByUserIdAndBookIdAndDateRange(
+                    userId = userId,
+                    bookId = bookId,
+                    startDate = startDate,
+                    endDate = endDate
+                )
+                // 초를 분으로 변환
+                durationSeconds / 60
+            }
         }
     }
 
@@ -235,7 +279,10 @@ data class RoutineWithDetails(
     val bookTitle: String,
     val bookAuthor: String,
     val bookCoverImage: String?,
+    val bookPublisher: String?,
+    val bookPublishYear: Int?,
     val bookTotalPages: Int,
     val bookStatus: UserBookStatus,
-    val currentProgress: Int
+    val currentProgress: Int,
+    val achievedAmount: Int
 )

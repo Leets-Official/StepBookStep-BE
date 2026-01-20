@@ -55,9 +55,12 @@ class ReadingController(
                 bookTitle = routine.bookTitle,
                 bookAuthor = routine.bookAuthor,
                 bookCoverImage = routine.bookCoverImage,
+                bookPublisher = routine.bookPublisher,
+                bookPublishYear = routine.bookPublishYear,
                 bookTotalPages = routine.bookTotalPages,
                 bookStatus = routine.bookStatus,
-                currentProgress = routine.currentProgress
+                currentProgress = routine.currentProgress,
+                achievedAmount = routine.achievedAmount
             )
         }
 

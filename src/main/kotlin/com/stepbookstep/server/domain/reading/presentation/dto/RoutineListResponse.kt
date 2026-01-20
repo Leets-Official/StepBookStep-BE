@@ -19,13 +19,15 @@ data class RoutineItem(
     val bookTitle: String,
     val bookAuthor: String,
     val bookCoverImage: String?,
+    val bookPublisher: String?,
+    val bookPublishYear: Int?,
     val bookTotalPages: Int,
     val bookStatus: UserBookStatus,
     val period: GoalPeriod,
     val metric: GoalMetric,
     val targetAmount: Int,
-    val currentProgress: Int,  // 책 전체 대비 진행률 (0-100)
-    val remainingPages: Int    // 남은 페이지 수
+    val achievedAmount: Int,      // 현재 기간에 달성한 양 (페이지 또는 분)
+    val remainingAmount: Int      // 목표 달성까지 남은 양 (페이지 또는 분)
 ) {
     companion object {
         fun from(
@@ -33,12 +35,14 @@ data class RoutineItem(
             bookTitle: String,
             bookAuthor: String,
             bookCoverImage: String?,
+            bookPublisher: String?,
+            bookPublishYear: Int?,
             bookTotalPages: Int,
             bookStatus: UserBookStatus,
-            currentProgress: Int
+            currentProgress: Int,
+            achievedAmount: Int
         ): RoutineItem {
-            val readPages = (bookTotalPages * currentProgress / 100.0).toInt()
-            val remainingPages = (bookTotalPages - readPages).coerceAtLeast(0)
+            val remainingAmount = (goal.targetAmount - achievedAmount).coerceAtLeast(0)
 
             return RoutineItem(
                 goalId = goal.id,
@@ -46,13 +50,15 @@ data class RoutineItem(
                 bookTitle = bookTitle,
                 bookAuthor = bookAuthor,
                 bookCoverImage = bookCoverImage,
+                bookPublisher = bookPublisher,
+                bookPublishYear = bookPublishYear,
                 bookTotalPages = bookTotalPages,
                 bookStatus = bookStatus,
                 period = goal.period,
                 metric = goal.metric,
                 targetAmount = goal.targetAmount,
-                currentProgress = currentProgress,
-                remainingPages = remainingPages
+                achievedAmount = achievedAmount,
+                remainingAmount = remainingAmount
             )
         }
     }
