@@ -8,4 +8,6 @@ interface UserRepository : JpaRepository<User, Long> {
         provider: String,
         providerUserId: String
     ): User?
+    fun existsByNickname(nickname: String): Boolean
+    fun existsByNicknameAndIdNot(nickname: String, id: Long): Boolean
 }
