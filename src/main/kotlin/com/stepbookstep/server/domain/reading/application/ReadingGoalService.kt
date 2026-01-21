@@ -115,7 +115,7 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId, goal.period, goal.metric, book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
 
         return ReadingGoalWithProgress(
             goal = goal,
@@ -137,7 +137,7 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId, goal.period, goal.metric, book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
 
         return ReadingGoalWithProgress(
             goal = goal,
@@ -160,8 +160,6 @@ class ReadingGoalService(
             val currentProgress = calculateCurrentProgress(
                 userId = userId,
                 bookId = goal.bookId,
-                period = goal.period,
-                metric = goal.metric,
                 totalPages = book.itemPage
             )
 
@@ -190,7 +188,7 @@ class ReadingGoalService(
 
     /**
      * 현재 기간에 달성한 양 계산
-     * - PAGE: 기간 내 첫 기록과 마지막 기록의 페이지 차이
+     * - PAGE: baseline(기간 시작 전)과 마지막 기록 차이
      * - TIME: 기간 내 총 독서 시간 합계
      */
     private fun calculateAchievedAmount(
@@ -203,46 +201,27 @@ class ReadingGoalService(
 
         return when (metric) {
             GoalMetric.PAGE -> {
-                val firstRecord = readingLogRepository.findFirstRecordInDateRange(
+                // 1) 기간 시작 전 마지막 기록 = baseline
+                val baselineRecord = readingLogRepository.findLastRecordBeforeDate(
+                    userId = userId,
+                    bookId = bookId,
+                    beforeDate = startDate
+                )
+
+                // 2) 기간 내 마지막 기록 = endValue
+                val lastRecordInPeriod = readingLogRepository.findLastRecordInDateRange(
                     userId = userId,
                     bookId = bookId,
                     startDate = startDate,
                     endDate = endDate
                 )
 
-                val lastRecord = readingLogRepository.findLastRecordInDateRange(
-                    userId = userId,
-                    bookId = bookId,
-                    startDate = startDate,
-                    endDate = endDate
-                )
+                val baseline = baselineRecord?.readQuantity ?: 0
+                val endValue = lastRecordInPeriod?.readQuantity ?: return 0
 
-                when {
-                    // 기록이 없는 경우
-                    firstRecord == null || lastRecord == null -> 0
-
-                    // 기록이 1개만 있는 경우 (같은 날 첫 기록)
-                    firstRecord.id == lastRecord.id -> {
-                        // 기간 시작 전 마지막 기록을 찾아서 차이 계산
-                        val previousRecord = readingLogRepository.findLastRecordBeforeDate(
-                            userId = userId,
-                            bookId = bookId,
-                            beforeDate = startDate
-                        )
-                        if (previousRecord != null) {
-                            (lastRecord.readQuantity!! - previousRecord.readQuantity!!).coerceAtLeast(0)
-                        } else {
-                            // 이전 기록이 없으면 현재 위치가 곧 읽은 양
-                            lastRecord.readQuantity ?: 0
-                        }
-                    }
-
-                    // 기록이 여러 개 있는 경우: 마지막 - 첫 번째
-                    else -> {
-                        (lastRecord.readQuantity!! - firstRecord.readQuantity!!).coerceAtLeast(0)
-                    }
-                }
+                (endValue - baseline).coerceAtLeast(0)
             }
+
             GoalMetric.TIME -> {
                 val durationSeconds = readingLogRepository.sumDurationByUserIdAndBookIdAndDateRange(
                     userId = userId,
@@ -250,11 +229,11 @@ class ReadingGoalService(
                     startDate = startDate,
                     endDate = endDate
                 )
-                // 초를 분으로 변환
                 durationSeconds / 60
             }
         }
     }
+
 
     /**
      * 현재 진행률 계산 (책 전체 대비 읽은 비율 0-100)
@@ -262,20 +241,16 @@ class ReadingGoalService(
     private fun calculateCurrentProgress(
         userId: Long,
         bookId: Long,
-        period: GoalPeriod,
-        metric: GoalMetric,
         totalPages: Int
     ): Int {
-        // 전체 누적 읽은 페이지 수
-        val readPages = readingLogRepository.sumTotalReadQuantityByUserIdAndBookId(userId, bookId)
+        val latest = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId)
+        val currentPage = latest?.readQuantity ?: 0
 
-        // 책의 총 페이지 대비 비율 계산 (0-100)
         return if (totalPages > 0) {
-            ((readPages.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
-        } else {
-            0
-        }
+            ((currentPage.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+        } else 0
     }
+
 
     /**
      * 기간에 따른 날짜 범위 계산
