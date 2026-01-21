@@ -1,6 +1,7 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
+import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.GoalMetric
 import com.stepbookstep.server.domain.reading.domain.ReadingGoalRepository
 import com.stepbookstep.server.domain.reading.domain.ReadingLog
@@ -9,7 +10,6 @@ import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus
 import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus.*
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
-import com.stepbookstep.server.domain.reading.domain.UserBookStatus
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.stereotype.Service
@@ -46,11 +46,14 @@ class ReadingLogService(
             rating = rating
         )
 
+        val book = bookRepository.findById(bookId)
+            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
+
         val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
             ?: userBookRepository.save(
                 UserBook(
                     userId = userId,
-                    bookId = bookId,
+                    book = book,
                     status = bookStatus.toUserBookStatus()
                 )
             )
@@ -159,9 +162,9 @@ class ReadingLogService(
         }
     }
 
-    private fun ReadingLogStatus.toUserBookStatus(): UserBookStatus = when (this) {
-        READING -> UserBookStatus.READING
-        FINISHED -> UserBookStatus.FINISHED
-        STOPPED -> UserBookStatus.STOPPED
+    private fun ReadingLogStatus.toUserBookStatus(): ReadStatus = when (this) {
+        READING -> ReadStatus.READING
+        FINISHED -> ReadStatus.FINISHED
+        STOPPED -> ReadStatus.STOPPED
     }
 }
