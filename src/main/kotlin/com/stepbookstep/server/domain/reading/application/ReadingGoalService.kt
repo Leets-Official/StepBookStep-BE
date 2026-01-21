@@ -296,7 +296,7 @@ data class RoutineWithDetails(
     val bookPublisher: String?,
     val bookPublishYear: Int?,
     val bookTotalPages: Int,
-    val bookStatus: UserBookStatus,
+    val bookStatus: ReadStatus,
     val currentProgress: Int,
     val achievedAmount: Int
 )
