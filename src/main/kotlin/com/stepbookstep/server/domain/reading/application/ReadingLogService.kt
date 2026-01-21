@@ -60,7 +60,6 @@ class ReadingLogService(
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
             userBook.updatedAt = OffsetDateTime.now()
-            userBookRepository.save(userBook)
         }
 
         // recordDate가 null이면 오늘 날짜 사용
