@@ -54,11 +54,11 @@ class ReadingLogService(
                 UserBook(
                     userId = userId,
                     book = book,
-                    status = bookStatus.toUserBookStatus()
+                    status = bookStatus.toReadStatus()
                 )
             )
 
-        val targetStatus = bookStatus.toUserBookStatus()
+        val targetStatus = bookStatus.toReadStatus()
 
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
@@ -162,7 +162,7 @@ class ReadingLogService(
         }
     }
 
-    private fun ReadingLogStatus.toUserBookStatus(): ReadStatus = when (this) {
+    private fun ReadingLogStatus.toReadStatus(): ReadStatus = when (this) {
         READING -> ReadStatus.READING
         FINISHED -> ReadStatus.FINISHED
         STOPPED -> ReadStatus.STOPPED
