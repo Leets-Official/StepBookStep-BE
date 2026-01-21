@@ -10,8 +10,8 @@ class AuthenticatedUserResolver(
 ) {
     fun getUserId(authorizationHeader: String?): Long {
         if (authorizationHeader.isNullOrBlank()) {
-            return 1L; //테스트용 우회
-            //throw CustomException(ErrorCode.TOKEN_NOT_FOUND)
+            //return 1L; //테스트용 우회
+            throw CustomException(ErrorCode.TOKEN_NOT_FOUND)
         }
 
         if (!authorizationHeader.startsWith("Bearer ")) {

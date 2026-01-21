@@ -129,7 +129,8 @@ enum class ErrorCode(
     DURATION_REQUIRED(5001, HttpStatus.BAD_REQUEST, "독서 시간을 입력해주세요."),
     RATING_REQUIRED(5002, HttpStatus.BAD_REQUEST, "평점을 입력해주세요."),
     INVALID_RATING(5003, HttpStatus.BAD_REQUEST, "평점은 1-5 사이여야 합니다."),
-    TARGET_AMOUNT_INVALID(5004, HttpStatus.BAD_REQUEST, "목표량은 1 이상이어야 합니다.");
+    TARGET_AMOUNT_INVALID(5004, HttpStatus.BAD_REQUEST, "목표량은 1 이상이어야 합니다."),
+    PAGE_CANNOT_GO_BACK(5005, HttpStatus.BAD_REQUEST, "이전 기록보다 적은 페이지를 입력할 수 없습니다.");
 
     companion object {
         /**

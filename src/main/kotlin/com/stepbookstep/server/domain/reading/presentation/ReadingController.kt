@@ -6,6 +6,8 @@ import com.stepbookstep.server.domain.reading.application.ReadingLogService
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogRequest
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.ReadingGoalResponse
+import com.stepbookstep.server.domain.reading.presentation.dto.RoutineItem
+import com.stepbookstep.server.domain.reading.presentation.dto.RoutineListResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.UpsertReadingGoalRequest
 import com.stepbookstep.server.global.response.ApiResponse
 import com.stepbookstep.server.global.response.CustomException
@@ -35,6 +37,34 @@ class ReadingController(
     private val bookRepository: BookRepository,
     private val authenticatedUserResolver: AuthenticatedUserResolver
 ) {
+
+    @Operation(
+        summary = "루틴 목록 조회",
+        description = "사용자의 모든 활성화된 독서 목표를 조회합니다. 루틴 탭에서 사용합니다."
+    )
+    @GetMapping("/routines")
+    fun getRoutineList(
+        @RequestHeader("Authorization", required = false) authorization: String?
+    ): ResponseEntity<ApiResponse<RoutineListResponse>> {
+        val userId = authenticatedUserResolver.getUserId(authorization)
+        val routines = readingGoalService.getAllActiveRoutines(userId)
+
+        val routineItems = routines.map { routine ->
+            RoutineItem.from(
+                goal = routine.goal,
+                bookTitle = routine.bookTitle,
+                bookAuthor = routine.bookAuthor,
+                bookCoverImage = routine.bookCoverImage,
+                bookPublisher = routine.bookPublisher,
+                bookPublishYear = routine.bookPublishYear,
+                bookTotalPages = routine.bookTotalPages,
+                bookStatus = routine.bookStatus,
+                achievedAmount = routine.achievedAmount
+            )
+        }
+
+        return ResponseEntity.ok(ApiResponse.ok(RoutineListResponse(routineItems)))
+    }
 
     @Operation(
         summary = "독서 목표 생성/수정/삭제",
@@ -108,6 +138,7 @@ class ReadingController(
             독서 기록을 생성합니다.
             
             [입력 규칙]
+            - recordDate: 기록 날짜 (생략 시 오늘 날짜로 자동 설정)
             - READING 상태:
               * readQuantity(읽은 페이지) 필수
               * TIME 목표인 경우 durationSeconds(읽은 시간) 필수
