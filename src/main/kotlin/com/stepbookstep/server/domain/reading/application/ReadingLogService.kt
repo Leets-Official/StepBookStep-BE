@@ -30,7 +30,7 @@ class ReadingLogService(
         userId: Long,
         bookId: Long,
         bookStatus: ReadingLogStatus,
-        recordDate: LocalDate,
+        recordDate: LocalDate?,
         readQuantity: Int?,
         durationSeconds: Int?,
         rating: Int?
@@ -60,15 +60,17 @@ class ReadingLogService(
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
             userBook.updatedAt = OffsetDateTime.now()
-            userBookRepository.save(userBook)
         }
+
+        // recordDate가 null이면 오늘 날짜 사용
+        val actualRecordDate = recordDate ?: LocalDate.now()
 
         val log = readingLogRepository.save(
             ReadingLog(
                 userId = userId,
                 bookId = bookId,
                 bookStatus = bookStatus,
-                recordDate = recordDate,
+                recordDate = actualRecordDate,
                 readQuantity = readQuantity,
                 durationSeconds = durationSeconds,
                 rating = if (bookStatus == READING) null else rating
@@ -126,10 +128,27 @@ class ReadingLogService(
             throw CustomException(ErrorCode.READ_QUANTITY_REQUIRED)
         }
 
+        // 페이지 역행 검증 (이전 기록보다 적은 페이지 입력 불가)
+        validatePageProgression(userId, bookId, readQuantity)
+
         // 목표 metric에 따른 추가 검증
         validateByGoalMetric(activeGoal.metric, durationSeconds)
 
         activeGoal
+    }
+
+    /**
+     * 페이지 역행 검증
+     * - 이전 기록보다 적은 페이지를 입력할 수 없음
+     */
+    private fun validatePageProgression(userId: Long, bookId: Long, readQuantity: Int) {
+        val latestRecord = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId)
+
+        if (latestRecord != null && latestRecord.readQuantity != null) {
+            if (readQuantity < latestRecord.readQuantity!!) {
+                throw CustomException(ErrorCode.PAGE_CANNOT_GO_BACK)
+            }
+        }
     }
 
     private fun validateByGoalMetric(metric: GoalMetric, durationSeconds: Int?) {
