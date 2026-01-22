@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
+import org.springframework.data.web.PageableDefault
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
@@ -40,17 +43,14 @@ class MyBookController(
         )
         @RequestParam readStatus: String,
 
-        @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
-        @RequestParam(defaultValue = "0") page: Int,
-
-        @Parameter(description = "페이지 크기 (최대 50)", example = "20")
-        @RequestParam(defaultValue = "20") size: Int,
+        @PageableDefault(size = 20, sort = ["updatedAt"], direction = Sort.Direction.DESC)
+        pageable: Pageable,
 
         @Parameter(hidden = true)
     @AuthenticationPrincipal userId: Long
     ): MyBooksResponse {
         val tab = MyShelf.from(readStatus)
-        val result = myBookQueryService.getMyBooks(userId, tab, page, size)
+        val result = myBookQueryService.getMyBooks(userId, tab, pageable)
         return MyBooksResponse.from(result)
     }
 }

@@ -21,7 +21,7 @@ class BookmarkService(
 
     @Transactional
     fun addBookmark(userId: Long, bookId: Long) {
-        if (bookId <= 0) throw CustomException(ErrorCode.INVALID_INPUT)
+        validateBookId(bookId)
 
         val book = bookRepository.findById(bookId)
             .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
@@ -33,7 +33,7 @@ class BookmarkService(
                 UserBook(
                     userId = userId,
                     book = book,
-                    status = ReadStatus.PAUSED,
+                    status = ReadStatus.STOPPED,
                     isBookmarked = true,
                     createdAt = OffsetDateTime.now(),
                     updatedAt = OffsetDateTime.now()
@@ -47,10 +47,10 @@ class BookmarkService(
 
     @Transactional
     fun removeBookmark(userId: Long, bookId: Long) {
-        if (bookId <= 0) throw CustomException(ErrorCode.INVALID_INPUT)
+        validateBookId(bookId)
 
         val existing = myPageUserBookRepository.findByUserIdAndBook_Id(userId, bookId)
-            ?: throw CustomException(ErrorCode.BOOK_NOT_FOUND)
+            ?: throw CustomException(ErrorCode.BOOKMARK_NOT_FOUND)
 
         if (!existing.isBookmarked) {
             throw CustomException(ErrorCode.BAD_REQUEST)
@@ -67,8 +67,14 @@ class BookmarkService(
                     existing.finishedAt == null &&
                     existing.rating == null
 
-        if (hasNoReadingData && existing.status == ReadStatus.PAUSED) {
+        if (hasNoReadingData && existing.status == ReadStatus.STOPPED) {
             myPageUserBookRepository.delete(existing)
+        }
+    }
+
+    private fun validateBookId(bookId: Long) {
+        if (bookId <= 0) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
         }
     }
 }

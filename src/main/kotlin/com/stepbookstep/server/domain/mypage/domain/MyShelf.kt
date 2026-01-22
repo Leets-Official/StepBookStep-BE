@@ -10,7 +10,7 @@ import com.stepbookstep.server.global.response.ErrorCode
 enum class MyShelf {
     READING, //독서상태 - '읽는 중'
     FINISHED, // 독서상태 - '완독한'
-    PAUSED, // 독서상태 - '중단한'
+    STOPPED, // 독서상태 - '중단한'
     BOOKMARKED; // 독서상태 - '읽고 싶은' (북마크)
 
     companion object {
@@ -21,7 +21,7 @@ enum class MyShelf {
             return when (v.uppercase()) {
                 "READING" -> READING
                 "FINISHED" -> FINISHED
-                "PAUSED" -> PAUSED
+                "STOPPED" -> STOPPED
                 "BOOKMARKED" -> BOOKMARKED
                 else -> throw CustomException(ErrorCode.INVALID_INPUT)
             }

@@ -3,6 +3,7 @@ package com.stepbookstep.server.domain.mypage.application.dto
 import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import org.springframework.data.domain.Page
+import java.time.LocalDate
 import java.time.OffsetDateTime
 
 data class MyBooksResponse(
@@ -30,6 +31,9 @@ data class MyBookItem(
     val userBookId: Long,
     val title: String,
     val author: String,
+    val publisher: String,
+    val pubDate: LocalDate,
+    val itemPage: Int,
     val coverUrl: String,
     val status: ReadStatus,
     val isBookmarked: Boolean,
@@ -47,6 +51,9 @@ data class MyBookItem(
                 userBookId = ub.id,
                 title = ub.book.title,
                 author = ub.book.author,
+                publisher = ub.book.publisher,
+                pubDate = ub.book.pubDate,
+                itemPage = ub.book.itemPage,
                 coverUrl = ub.book.coverUrl,
                 status = ub.status,
                 isBookmarked = ub.isBookmarked,

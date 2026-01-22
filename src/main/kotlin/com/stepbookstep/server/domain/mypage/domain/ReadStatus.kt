@@ -10,7 +10,7 @@ import com.stepbookstep.server.global.response.ErrorCode
 enum class ReadStatus {
     READING, //독서상태 - '읽는 중'
     FINISHED, // 독서상태 - '완독한'
-    PAUSED, STOPPED; // 독서상태 - '중단한' (읽고 싶은으로만 추가했을 때의 기본 상태로도 사용)
+    STOPPED; // 독서상태 - '중단한' (읽고 싶은으로만 추가했을 때의 기본 상태로도 사용)
 
     companion object {
         fun from(value: String): ReadStatus {
@@ -20,7 +20,7 @@ enum class ReadStatus {
             return when (value.trim().uppercase()) {
                 "READING" -> READING
                 "FINISHED" -> FINISHED
-                "PAUSED" -> PAUSED
+                "STOPPED" -> STOPPED
                 else -> throw CustomException(ErrorCode.INVALID_INPUT)
             }
         }
