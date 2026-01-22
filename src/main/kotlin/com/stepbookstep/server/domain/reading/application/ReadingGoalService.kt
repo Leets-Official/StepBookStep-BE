@@ -1,6 +1,7 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
+import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.GoalMetric
 import com.stepbookstep.server.domain.reading.domain.GoalPeriod
 import com.stepbookstep.server.domain.reading.domain.ReadingGoal
@@ -8,7 +9,6 @@ import com.stepbookstep.server.domain.reading.domain.ReadingGoalRepository
 import com.stepbookstep.server.domain.reading.domain.ReadingLogRepository
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
-import com.stepbookstep.server.domain.reading.domain.UserBookStatus
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.stereotype.Service
@@ -47,16 +47,19 @@ class ReadingGoalService(
             throw CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
+        val book = bookRepository.findById(bookId)
+            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
+
         // UserBook 생성 또는 상태 업데이트
         val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
             ?: UserBook(
                 userId = userId,
-                bookId = bookId,
-                status = UserBookStatus.READING
+                book = book,
+                status = ReadStatus.READING
             )
 
-        if (userBook.status != UserBookStatus.READING) {
-            userBook.status = UserBookStatus.READING
+        if (userBook.status != ReadStatus.READING) {
+            userBook.status = ReadStatus.READING
             userBook.updatedAt = OffsetDateTime.now()
         }
 
@@ -293,7 +296,7 @@ data class RoutineWithDetails(
     val bookPublisher: String?,
     val bookPublishYear: Int?,
     val bookTotalPages: Int,
-    val bookStatus: UserBookStatus,
+    val bookStatus: ReadStatus,
     val currentProgress: Int,
     val achievedAmount: Int
 )

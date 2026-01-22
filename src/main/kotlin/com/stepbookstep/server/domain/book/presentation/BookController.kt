@@ -3,28 +3,34 @@ package com.stepbookstep.server.domain.book.presentation
 import com.stepbookstep.server.domain.book.application.BookQueryService
 import com.stepbookstep.server.domain.book.presentation.dto.BookDetailResponse
 import com.stepbookstep.server.domain.book.presentation.dto.BookSearchResponse
+import com.stepbookstep.server.domain.mypage.domain.MyPageUserBookRepository
 import com.stepbookstep.server.global.response.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @Tag(name = "Book", description = "도서 API")
 @RestController
 @RequestMapping("/api/v1/books")
 class BookController(
-    private val bookQueryService: BookQueryService
+    private val bookQueryService: BookQueryService,
+    private val myPageUserBookRepository: MyPageUserBookRepository
 ) {
 
     // TODO: 북마크/루틴 연동 전 단계입니다.
     @Operation(summary = "도서 상세 조회", description = "도서 ID로 상세 정보를 조회합니다.")
     @GetMapping("/{bookId}")
     fun getBook(
-        @Parameter(description = "도서 ID") @PathVariable bookId: Long
+        @Parameter(description = "도서 ID") @PathVariable bookId: Long, @AuthenticationPrincipal userId: Long?
     ): ResponseEntity<ApiResponse<BookDetailResponse>> {
         val book = bookQueryService.findById(bookId)
-        val response = BookDetailResponse.from(book, isBookmarked = false, myRecord = null)
+        val isBookmarked = userId?.let {
+            myPageUserBookRepository.existsByUserIdAndBook_IdAndIsBookmarkedTrue(it, bookId)
+        } ?: false
+        val response = BookDetailResponse.from(book, isBookmarked = isBookmarked, myRecord = null)
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
