@@ -31,7 +31,7 @@ class UserBook(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    var status: ReadStatus = ReadStatus.PAUSED,
+    var status: ReadStatus = ReadStatus.STOPPED,
 
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
