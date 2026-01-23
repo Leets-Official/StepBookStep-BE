@@ -9,7 +9,7 @@ interface BookRepository : JpaRepository<Book, Long> {
     fun findByIsbn13(isbn13: String): Book?
 
     @Query(
-        value = "SELECT * FROM books_new WHERE level = :level ORDER BY RAND() LIMIT 4",
+        value = "SELECT * FROM books WHERE level = :level ORDER BY RAND() LIMIT 4",
         nativeQuery = true
     )
     fun findRandomByLevel(@Param("level") level: Int): List<Book>
@@ -21,19 +21,19 @@ interface BookRepository : JpaRepository<Book, Long> {
     fun searchByKeyword(@Param("keyword") keyword: String): List<Book>
 
     @Query(
-        value = "SELECT * FROM books_new WHERE genre = :genre ORDER BY RAND() LIMIT 20",
+        value = "SELECT * FROM books WHERE genre = :genre ORDER BY RAND() LIMIT 20",
         nativeQuery = true
     )
     fun findRandomByGenre(@Param("genre") genre: String): List<Book>
 
     @Query(
-        value = "SELECT * FROM books_new WHERE item_page < 200 ORDER BY RAND() LIMIT 20",
+        value = "SELECT * FROM books WHERE item_page < 200 ORDER BY RAND() LIMIT 20",
         nativeQuery = true
     )
     fun findUnder200Pages(): List<Book>
 
     @Query(
-        value = "SELECT * FROM books_new WHERE is_bestseller = 1 ORDER BY RAND() LIMIT 20",
+        value = "SELECT * FROM books WHERE is_bestseller = 1 ORDER BY RAND() LIMIT 20",
         nativeQuery = true
     )
     fun findBestsellers(): List<Book>
