@@ -13,7 +13,7 @@ import org.springframework.web.method.support.ModelAndViewContainer
  * request attribute의 userId를 주입하는 ArgumentResolver
  */
 @Component
-class AuthenticationPrincipalArgumentResolver : HandlerMethodArgumentResolver {
+class LoginUserIdArgumentResolver : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean {
         return parameter.hasParameterAnnotation(LoginUserId::class.java)
