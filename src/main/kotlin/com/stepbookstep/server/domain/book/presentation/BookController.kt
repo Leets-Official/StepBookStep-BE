@@ -3,13 +3,14 @@ package com.stepbookstep.server.domain.book.presentation
 import com.stepbookstep.server.domain.book.application.BookQueryService
 import com.stepbookstep.server.domain.book.presentation.dto.BookDetailResponse
 import com.stepbookstep.server.domain.book.presentation.dto.BookSearchResponse
-import com.stepbookstep.server.domain.mypage.domain.MyPageUserBookRepository
+import com.stepbookstep.server.domain.book.presentation.dto.MyRecord
+import com.stepbookstep.server.domain.reading.domain.UserBookRepository
 import com.stepbookstep.server.global.response.ApiResponse
+import com.stepbookstep.server.security.jwt.LoginUserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @Tag(name = "Book", description = "도서 API")
@@ -17,20 +18,31 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/books")
 class BookController(
     private val bookQueryService: BookQueryService,
-    private val myPageUserBookRepository: MyPageUserBookRepository
+    private val userBookRepository: UserBookRepository
 ) {
 
-    // TODO: 북마크/루틴 연동 전 단계입니다.
-    @Operation(summary = "도서 상세 조회", description = "도서 ID로 상세 정보를 조회합니다.")
+    @Operation(summary = "도서 상세 조회", description = "도서 ID로 상세 정보를 조회합니다. 북마크 여부와 독서 기록이 포함됩니다.")
     @GetMapping("/{bookId}")
     fun getBook(
-        @Parameter(description = "도서 ID") @PathVariable bookId: Long, @AuthenticationPrincipal userId: Long?
+        @Parameter(description = "도서 ID") @PathVariable bookId: Long,
+        @Parameter(hidden = true) @LoginUserId userId: Long
     ): ResponseEntity<ApiResponse<BookDetailResponse>> {
         val book = bookQueryService.findById(bookId)
-        val isBookmarked = userId?.let {
-            myPageUserBookRepository.existsByUserIdAndBook_IdAndIsBookmarkedTrue(it, bookId)
-        } ?: false
-        val response = BookDetailResponse.from(book, isBookmarked = isBookmarked, myRecord = null)
+
+        val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
+
+        val isBookmarked = userBook?.isBookmarked ?: false
+        val myRecord = userBook?.let {
+            MyRecord(
+                status = it.status.name,
+                startDate = it.createdAt.toLocalDate().toString(),
+                endDate = it.finishedAt?.toLocalDate()?.toString(),
+                currentPage = it.totalPagesRead,
+                readPercent = it.progressPercent
+            )
+        }
+
+        val response = BookDetailResponse.from(book, isBookmarked = isBookmarked, myRecord = myRecord)
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
