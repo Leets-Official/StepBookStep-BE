@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(
-    name = "books_new",
+    name = "books",
     indexes = [
         Index(name = "idx_isbn13", columnList = "isbn13", unique = true),
         Index(name = "idx_origin", columnList = "origin"),
