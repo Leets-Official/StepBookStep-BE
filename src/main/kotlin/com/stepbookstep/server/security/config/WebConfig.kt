@@ -9,12 +9,12 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 /**
  * 인증 인터셉터를 등록하고,
- * 적용/제외할 API 경로를 설정하는 Web MVC 설정 클래스
+ * 적용/제외할 API 경로를 설정하는 Web MVC 설정 클래스₩
  */
 @Configuration
 class WebConfig(
     private val authenticationInterceptor: AuthenticationInterceptor,
-    private val authenticationPrincipalArgumentResolver: LoginUserIdArgumentResolver
+    private val loginUserIdArgumentResolver: LoginUserIdArgumentResolver
 ) : WebMvcConfigurer {
 
     companion object {
@@ -28,7 +28,7 @@ class WebConfig(
     }
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
-        resolvers.add(authenticationPrincipalArgumentResolver)
+        resolvers.add(loginUserIdArgumentResolver)
     }
 
     override fun addInterceptors(registry: InterceptorRegistry) {
