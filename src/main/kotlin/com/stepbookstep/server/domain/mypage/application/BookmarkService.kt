@@ -25,8 +25,7 @@ class BookmarkService(
 
         val book = bookRepository.findById(bookId)
             .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
-
-        val existing = myPageUserBookRepository.findByUserIdAndBook_Id(userId, bookId)
+    val existing = myPageUserBookRepository.findByUserIdAndBookId(userId, bookId)
 
         if (existing == null) {
             myPageUserBookRepository.save(
@@ -49,7 +48,7 @@ class BookmarkService(
     fun removeBookmark(userId: Long, bookId: Long) {
         validateBookId(bookId)
 
-        val existing = myPageUserBookRepository.findByUserIdAndBook_Id(userId, bookId)
+        val existing = myPageUserBookRepository.findByUserIdAndBookId(userId, bookId)
             ?: throw CustomException(ErrorCode.BOOKMARK_NOT_FOUND)
 
         if (!existing.isBookmarked) {
