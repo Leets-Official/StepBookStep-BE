@@ -80,4 +80,31 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long
     ): ReadingLog?
+
+    /**
+     * 사용자의 전체 독서 시간 합계 (초)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(rl.durationSeconds), 0)
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.durationSeconds IS NOT NULL
+    """)
+    fun sumAllDurationByUserId(@Param("userId") userId: Long): Int
+
+    /**
+     * 특정 월에 완독한 책 수 계산
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT rl.bookId)
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookStatus = 'FINISHED'
+        AND rl.recordDate BETWEEN :startDate AND :endDate
+    """)
+    fun countFinishedBooksInMonth(
+        @Param("userId") userId: Long,
+        @Param("startDate") startDate: LocalDate,
+        @Param("endDate") endDate: LocalDate
+    ): Int
 }
