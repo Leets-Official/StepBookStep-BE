@@ -1,5 +1,7 @@
 package com.stepbookstep.server.security.jwt
 
+import com.stepbookstep.server.global.response.CustomException
+import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.core.MethodParameter
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.support.WebDataBinderFactory
@@ -25,6 +27,13 @@ class LoginUserIdArgumentResolver : HandlerMethodArgumentResolver {
         webRequest: NativeWebRequest,
         binderFactory: WebDataBinderFactory?
     ): Long? {
-        return webRequest.getAttribute("userId", RequestAttributes.SCOPE_REQUEST) as? Long
+        val userId = webRequest.getAttribute("userId", RequestAttributes.SCOPE_REQUEST) as? Long
+
+        // userId가 null이면 예외 처리
+        if (userId == null && !parameter.isOptional) {
+            throw CustomException(ErrorCode.INVALID_LOGIN)
+        }
+
+        return userId
     }
 }
