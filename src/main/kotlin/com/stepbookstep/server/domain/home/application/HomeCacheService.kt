@@ -14,16 +14,16 @@ class HomeCacheService(
 
     @Cacheable(value = ["genreBooks"], key = "#genre")
     fun getGenreBooks(genre: String): List<Book> {
-        return bookRepository.findRandomByGenre(genre)
+        return bookRepository.findAllByGenre(genre)
     }
 
     @Cacheable(value = ["under200Books"])
     fun getUnder200Books(): List<Book> {
-        return bookRepository.findUnder200Pages()
+        return bookRepository.findAllUnder200Pages()
     }
 
     @Cacheable(value = ["bestsellerBooks"])
     fun getBestsellerBooks(): List<Book> {
-        return bookRepository.findBestsellers()
+        return bookRepository.findAllBestsellers()
     }
 }
