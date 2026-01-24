@@ -1,6 +1,7 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
+import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.*
 import com.stepbookstep.server.domain.reading.presentation.dto.*
 import org.springframework.stereotype.Service
@@ -210,6 +211,7 @@ class StatisticsService(
 
     /**
      * 날짜 범위를 기간 단위로 나눔
+     * 목표 생성일 기준으로 기간 분할
      */
     private fun getPeriodsBetweenDates(
         startDate: LocalDate,
@@ -223,12 +225,12 @@ class StatisticsService(
             val periodEnd = when (period) {
                 GoalPeriod.DAILY -> currentDate
                 GoalPeriod.WEEKLY -> {
-                    // 주의 시작은 월요일 (dayOfWeek.value == 1)
-                    val daysUntilSunday = 7 - currentDate.dayOfWeek.value
-                    currentDate.plusDays(daysUntilSunday.toLong()).coerceAtMost(endDate)
+                    // 생성일 기준 7일 단위
+                    currentDate.plusDays(6).coerceAtMost(endDate)
                 }
                 GoalPeriod.MONTHLY -> {
-                    YearMonth.from(currentDate).atEndOfMonth().coerceAtMost(endDate)
+                    // 생성일 기준 30일 단위
+                    currentDate.plusDays(29).coerceAtMost(endDate)
                 }
             }
 
@@ -302,10 +304,10 @@ class StatisticsService(
             categoryCountMap[category] = categoryCountMap.getOrDefault(category, 0) + 1
         }
 
-
+        // 내림차순 정렬 후 상위 3개만 선택
         val sortedCategories = categoryCountMap.entries
             .sortedByDescending { it.value }
-            .take(3)  // 상위 3개
+            .take(3)  // 상위 3개만
 
         val categories = sortedCategories.mapIndexed { index, entry ->
             CategoryDto(
