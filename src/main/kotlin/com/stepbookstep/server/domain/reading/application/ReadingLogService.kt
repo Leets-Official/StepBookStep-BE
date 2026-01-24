@@ -74,8 +74,8 @@ class ReadingLogService(
                 bookId = bookId,
                 bookStatus = bookStatus,
                 recordDate = actualRecordDate,
-                readQuantity = readQuantity,
-                durationSeconds = durationSeconds,
+                readQuantity = if (bookStatus == READING) readQuantity else null,
+                durationSeconds = if (bookStatus == READING) durationSeconds else null,
                 rating = if (bookStatus == READING) null else rating
             )
         )
