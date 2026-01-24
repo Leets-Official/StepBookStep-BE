@@ -12,7 +12,7 @@ import com.stepbookstep.server.domain.reading.presentation.dto.UpsertReadingGoal
 import com.stepbookstep.server.global.response.ApiResponse
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
-import com.stepbookstep.server.security.jwt.AuthenticatedUserResolver
+import com.stepbookstep.server.security.jwt.LoginUserId
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -34,8 +33,7 @@ import org.springframework.web.bind.annotation.RestController
 class ReadingController(
     private val readingGoalService: ReadingGoalService,
     private val readingLogService: ReadingLogService,
-    private val bookRepository: BookRepository,
-    private val authenticatedUserResolver: AuthenticatedUserResolver
+    private val bookRepository: BookRepository
 ) {
 
     @Operation(
@@ -44,9 +42,8 @@ class ReadingController(
     )
     @GetMapping("/routines")
     fun getRoutineList(
-        @RequestHeader("Authorization", required = false) authorization: String?
+        @Parameter(hidden = true) @LoginUserId userId: Long
     ): ResponseEntity<ApiResponse<RoutineListResponse>> {
-        val userId = authenticatedUserResolver.getUserId(authorization)
         val routines = readingGoalService.getAllActiveRoutines(userId)
 
         val routineItems = routines.map { routine ->
@@ -77,11 +74,9 @@ class ReadingController(
     @PatchMapping("/books/{bookId}/goals")
     fun upsertOrDeleteGoal(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
-        @RequestHeader("Authorization", required = false) authorization: String?,
+        @Parameter(hidden = true) @LoginUserId userId: Long,
         @Valid @RequestBody request: UpsertReadingGoalRequest
     ): ResponseEntity<ApiResponse<ReadingGoalResponse?>> {
-        val userId = authenticatedUserResolver.getUserId(authorization)
-
         // 삭제 요청인 경우
         if (request.delete == true) {
             readingGoalService.deleteGoal(userId, bookId)
@@ -117,9 +112,8 @@ class ReadingController(
     @GetMapping("/books/{bookId}/goals")
     fun getGoal(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
-        @RequestHeader("Authorization", required = false) authorization: String?
+        @Parameter(hidden = true) @LoginUserId userId: Long
     ): ResponseEntity<ApiResponse<ReadingGoalResponse?>> {
-        val userId = authenticatedUserResolver.getUserId(authorization)
         val goalWithProgress = readingGoalService.getGoalWithProgress(userId, bookId)
 
         val response = goalWithProgress?.let {
@@ -136,7 +130,7 @@ class ReadingController(
         summary = "독서 기록 생성",
         description = """
             독서 기록을 생성합니다.
-            
+
             [입력 규칙]
             - recordDate: 기록 날짜 (생략 시 오늘 날짜로 자동 설정)
             - READING 상태:
@@ -152,10 +146,9 @@ class ReadingController(
     @PostMapping("/books/{bookId}/reading-logs")
     fun createReadingLog(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
-        @RequestHeader("Authorization", required = false) authorization: String?,
+        @Parameter(hidden = true) @LoginUserId userId: Long,
         @Valid @RequestBody request: CreateReadingLogRequest
     ): ResponseEntity<ApiResponse<CreateReadingLogResponse>> {
-        val userId = authenticatedUserResolver.getUserId(authorization)
         val log = readingLogService.createLog(
             userId = userId,
             bookId = bookId,

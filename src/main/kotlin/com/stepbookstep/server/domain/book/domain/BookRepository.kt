@@ -6,8 +6,6 @@ import org.springframework.data.repository.query.Param
 
 interface BookRepository : JpaRepository<Book, Long> {
 
-    fun findByIsbn13(isbn13: String): Book?
-
     @Query(
         value = "SELECT * FROM books WHERE level = :level ORDER BY RAND() LIMIT 4",
         nativeQuery = true
