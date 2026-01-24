@@ -125,7 +125,8 @@ class ReadingGoalService(
             userId = userId,
             bookId = bookId,
             period = goal.period,
-            metric = goal.metric
+            metric = goal.metric,
+            goalCreatedAt = goal.createdAt
         )
 
         return ReadingGoalWithProgress(
@@ -156,7 +157,8 @@ class ReadingGoalService(
             userId = userId,
             bookId = bookId,
             period = goal.period,
-            metric = goal.metric
+            metric = goal.metric,
+            goalCreatedAt = goal.createdAt
         )
 
         return ReadingGoalWithProgress(
@@ -184,12 +186,12 @@ class ReadingGoalService(
                 totalPages = book.itemPage
             )
 
-            // 현재 기간에 달성한 양 계산
             val achievedAmount = calculateAchievedAmount(
                 userId = userId,
                 bookId = goal.bookId,
                 period = goal.period,
-                metric = goal.metric
+                metric = goal.metric,
+                goalCreatedAt = goal.createdAt
             )
 
             RoutineWithDetails(
@@ -216,9 +218,10 @@ class ReadingGoalService(
         userId: Long,
         bookId: Long,
         period: GoalPeriod,
-        metric: GoalMetric
+        metric: GoalMetric,
+        goalCreatedAt: OffsetDateTime
     ): Int {
-        val (startDate, endDate) = getPeriodDateRange(period)
+        val (startDate, endDate) = getPeriodDateRange(period, goalCreatedAt)
 
         return when (metric) {
             GoalMetric.PAGE -> {
@@ -275,21 +278,34 @@ class ReadingGoalService(
 
     /**
      * 기간에 따른 날짜 범위 계산
+     * 목표 생성일 기준으로 계산
      */
-    private fun getPeriodDateRange(period: GoalPeriod): Pair<LocalDate, LocalDate> {
+    private fun getPeriodDateRange(
+        period: GoalPeriod,
+        goalCreatedAt: OffsetDateTime
+    ): Pair<LocalDate, LocalDate> {
         val today = LocalDate.now()
+        val goalStartDate = goalCreatedAt.toLocalDate()
 
         return when (period) {
             GoalPeriod.DAILY -> {
                 today to today
             }
             GoalPeriod.WEEKLY -> {
-                val startOfWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
-                startOfWeek to today
+                val daysSinceCreation = java.time.temporal.ChronoUnit.DAYS.between(goalStartDate, today)
+                val weekNumber = (daysSinceCreation / 7).toInt()
+                val startOfCurrentWeek = goalStartDate.plusDays(weekNumber * 7L)
+                val endOfCurrentWeek = startOfCurrentWeek.plusDays(6).coerceAtMost(today)
+
+                startOfCurrentWeek to endOfCurrentWeek
             }
             GoalPeriod.MONTHLY -> {
-                val startOfMonth = today.withDayOfMonth(1)
-                startOfMonth to today
+                val daysSinceCreation = java.time.temporal.ChronoUnit.DAYS.between(goalStartDate, today)
+                val monthNumber = (daysSinceCreation / 30).toInt()
+                val startOfCurrentMonth = goalStartDate.plusDays(monthNumber * 30L)
+                val endOfCurrentMonth = startOfCurrentMonth.plusDays(29).coerceAtMost(today)
+
+                startOfCurrentMonth to endOfCurrentMonth
             }
         }
     }
