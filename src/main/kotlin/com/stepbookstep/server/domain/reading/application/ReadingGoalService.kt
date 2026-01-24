@@ -107,7 +107,7 @@ class ReadingGoalService(
     }
 
     /**
-     * 특정 책의 활성 목표 조회 (진행률 포함)
+     * 특정 책의 활성 목표 조회 (진행률 + 달성량 포함)
      */
     @Transactional(readOnly = true)
     fun getActiveGoalWithProgress(userId: Long, bookId: Long): ReadingGoalWithProgress? {
@@ -118,16 +118,25 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId, book.itemPage)
+
+        // 현재 기간 달성량 계산 추가
+        val achievedAmount = calculateAchievedAmount(
+            userId = userId,
+            bookId = bookId,
+            period = goal.period,
+            metric = goal.metric
+        )
 
         return ReadingGoalWithProgress(
             goal = goal,
-            currentProgress = currentProgress
+            currentProgress = currentProgress,
+            achievedAmount = achievedAmount
         )
     }
 
     /**
-     * 특정 책의 목표 조회 (활성/비활성 무관, 진행률 포함)
+     * 특정 책의 목표 조회 (활성/비활성 무관, 진행률 + 달성량 포함)
      * - 완독/중지 상태에서도 목표를 표시하기 위해 사용
      * - 가장 최근 목표를 조회
      */
@@ -140,11 +149,20 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId, book.itemPage)
+
+        // 현재 기간 달성량 계산 추가
+        val achievedAmount = calculateAchievedAmount(
+            userId = userId,
+            bookId = bookId,
+            period = goal.period,
+            metric = goal.metric
+        )
 
         return ReadingGoalWithProgress(
             goal = goal,
-            currentProgress = currentProgress
+            currentProgress = currentProgress,
+            achievedAmount = achievedAmount
         )
     }
 
@@ -282,7 +300,8 @@ class ReadingGoalService(
  */
 data class ReadingGoalWithProgress(
     val goal: ReadingGoal,
-    val currentProgress: Int
+    val currentProgress: Int,
+    val achievedAmount: Int  // 현재 기간 달성량
 )
 
 /**

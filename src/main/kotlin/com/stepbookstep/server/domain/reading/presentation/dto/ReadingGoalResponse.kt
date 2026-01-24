@@ -12,6 +12,7 @@ data class ReadingGoalResponse(
     val metric: GoalMetric,
     val targetAmount: Int,
     val currentProgress: Int,        // 책 전체 대비 읽은 비율 (0-100)
+    val achievedAmount: Int,         // 현재 기간에 달성한 양(타이머 용)
     val isActive: Boolean,
     val createdAt: OffsetDateTime,
     val updatedAt: OffsetDateTime
@@ -19,7 +20,8 @@ data class ReadingGoalResponse(
     companion object {
         fun from(
             goal: ReadingGoal,
-            currentProgress: Int
+            currentProgress: Int,
+            achievedAmount: Int
         ): ReadingGoalResponse {
             return ReadingGoalResponse(
                 goalId = goal.id,
@@ -28,6 +30,7 @@ data class ReadingGoalResponse(
                 metric = goal.metric,
                 targetAmount = goal.targetAmount,
                 currentProgress = currentProgress,
+                achievedAmount = achievedAmount,
                 isActive = goal.active,
                 createdAt = goal.createdAt,
                 updatedAt = goal.updatedAt
