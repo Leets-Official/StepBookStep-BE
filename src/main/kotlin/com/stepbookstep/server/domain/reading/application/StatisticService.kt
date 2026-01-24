@@ -1,7 +1,6 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
-import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.*
 import com.stepbookstep.server.domain.reading.presentation.dto.*
 import org.springframework.stereotype.Service
@@ -35,7 +34,6 @@ class StatisticsService(
 
     /**
      * 완독한 책 요약 정보
-     * "8권 읽었어요! 총 4.6kg이에요."
      */
     @Transactional(readOnly = true)
     fun getBookSummary(userId: Long): BookSummaryDto {
@@ -89,7 +87,6 @@ class StatisticsService(
 
     /**
      * 누적 독서 시간
-     * "92시간 5분"
      */
     @Transactional(readOnly = true)
     fun getCumulativeTime(userId: Long): CumulativeTimeDto {
@@ -107,11 +104,6 @@ class StatisticsService(
 
     /**
      * 누적 목표 달성 기록
-     * "91%"
-     *
-     * 달성률 계산 방법:
-     * 1. 모든 목표 기간(일/주/월)에 대해 달성 여부를 확인
-     * 2. 달성한 기간 수 / 전체 기간 수 * 100
      */
     @Transactional(readOnly = true)
     fun getGoalAchievement(userId: Long): GoalAchievementDto {
