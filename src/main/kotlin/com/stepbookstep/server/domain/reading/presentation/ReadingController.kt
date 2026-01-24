@@ -102,7 +102,8 @@ class ReadingController(
 
         val response = ReadingGoalResponse.from(
             goal = goalWithProgress.goal,
-            currentProgress = goalWithProgress.currentProgress
+            currentProgress = goalWithProgress.currentProgress,
+            achievedAmount = goalWithProgress.achievedAmount  // 추가!
         )
 
         return ResponseEntity.ok(ApiResponse.ok(response))
@@ -119,7 +120,8 @@ class ReadingController(
         val response = goalWithProgress?.let {
             ReadingGoalResponse.from(
                 goal = it.goal,
-                currentProgress = it.currentProgress
+                currentProgress = it.currentProgress,
+                achievedAmount = it.achievedAmount  // 추가!
             )
         }
 
@@ -139,8 +141,10 @@ class ReadingController(
               * rating은 무시됨 (입력해도 저장 안 됨)
             - FINISHED 상태:
               * rating(1-5) 필수
+              * readQuantity, durationSeconds는 무시됨
             - STOPPED 상태:
               * rating(1-5) 필수
+              * readQuantity, durationSeconds는 무시됨
         """
     )
     @PostMapping("/books/{bookId}/reading-logs")
