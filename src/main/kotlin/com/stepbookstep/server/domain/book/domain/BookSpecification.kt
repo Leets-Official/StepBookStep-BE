@@ -26,12 +26,12 @@ object BookSpecification {
                 null
             } else {
                 when (pageRange) {
-                    "~200" -> cb.lessThanOrEqualTo(root.get("itemPage"), 200)
+                    "~200" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 200)
                     "201~250" -> cb.and(
-                        cb.greaterThan(root.get("itemPage"), 200),
-                        cb.lessThanOrEqualTo(root.get("itemPage"), 250)
+                        cb.greaterThan(root.get<Int>("itemPage"), 200),
+                        cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 250)
                     )
-                    "251~" -> cb.greaterThan(root.get("itemPage"), 250)
+                    "251~" -> cb.greaterThan(root.get<Int>("itemPage"), 250)
                     else -> null
                 }
             }
