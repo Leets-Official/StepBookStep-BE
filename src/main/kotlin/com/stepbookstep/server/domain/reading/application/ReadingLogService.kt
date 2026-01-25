@@ -68,6 +68,7 @@ class ReadingLogService(
         // recordDate가 null이면 오늘 날짜 사용
         val actualRecordDate = recordDate ?: LocalDate.now()
 
+        // 완독/중지 시에는 페이지/시간 무시, READING일 때만 저장
         val log = readingLogRepository.save(
             ReadingLog(
                 userId = userId,
@@ -145,7 +146,7 @@ class ReadingLogService(
      * - 이전 기록보다 적은 페이지를 입력할 수 없음
      */
     private fun validatePageProgression(userId: Long, bookId: Long, readQuantity: Int) {
-        val latestRecord = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId)
+        val latestRecord = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId).firstOrNull()
 
         if (latestRecord != null && latestRecord.readQuantity != null) {
             if (readQuantity < latestRecord.readQuantity!!) {

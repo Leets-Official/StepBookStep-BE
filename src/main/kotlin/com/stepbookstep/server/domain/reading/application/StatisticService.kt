@@ -1,7 +1,6 @@
 package com.stepbookstep.server.domain.reading.application
 
 import com.stepbookstep.server.domain.book.domain.BookRepository
-import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import com.stepbookstep.server.domain.reading.domain.*
 import com.stepbookstep.server.domain.reading.presentation.dto.*
 import org.springframework.stereotype.Service
@@ -59,29 +58,27 @@ class StatisticsService(
         val currentMonth = if (Year.now().value == year) {
             YearMonth.now().monthValue
         } else {
-            -1  // 과거/미래 연도는 현재 월 강조 없음
+            -1
         }
 
-        val monthlyData = (1..12).map { month ->
-            val startDate = LocalDate.of(year, month, 1)
-            val endDate = YearMonth.of(year, month).atEndOfMonth()
+        val monthlyData = readingLogRepository.countFinishedBooksGroupedByMonth(userId, year)
+            .associate {
+                val month = (it[0] as Number).toInt()
+                val count = (it[1] as Number).toInt()
+                month to count
+            }
 
-            val bookCount = readingLogRepository.countFinishedBooksInMonth(
-                userId = userId,
-                startDate = startDate,
-                endDate = endDate
-            )
-
+        val allMonthsData = (1..12).map { month ->
             MonthlyDataDto(
                 month = month,
-                bookCount = bookCount,
+                bookCount = monthlyData[month] ?: 0,
                 isCurrentMonth = month == currentMonth
             )
         }
 
         return MonthlyGraphResponse(
             year = year,
-            monthlyData = monthlyData
+            monthlyData = allMonthsData
         )
     }
 
@@ -117,11 +114,20 @@ class StatisticsService(
             )
         }
 
+        // 모든 목표의 기록을 한 번에 조회 (N+1 쿼리 방지)
+        val bookIds = allGoals.map { it.bookId }.distinct()
+        val earliestGoalDate = allGoals.minOf { it.createdAt.toLocalDate() }
+
+        val allLogs = readingLogRepository.findAllByBooksInDateRange(
+            userId = userId,
+            bookIds = bookIds,
+            startDate = earliestGoalDate
+        ).groupBy { it.bookId }
+
         var totalPeriods = 0
         var achievedPeriods = 0
 
         allGoals.forEach { goal ->
-            // 목표가 생성된 시점부터 비활성화된 시점(또는 현재)까지의 모든 기간 계산
             val goalStartDate = goal.createdAt.toLocalDate()
             val goalEndDate = if (goal.active) {
                 LocalDate.now()
@@ -130,13 +136,13 @@ class StatisticsService(
             }
 
             val periods = getPeriodsBetweenDates(goalStartDate, goalEndDate, goal.period)
+            val bookLogs = allLogs[goal.bookId] ?: emptyList()
 
             periods.forEach { (startDate, endDate) ->
                 totalPeriods++
 
-                val achieved = checkPeriodAchievement(
-                    userId = userId,
-                    bookId = goal.bookId,
+                val achieved = checkPeriodAchievementInMemory(
+                    logs = bookLogs,
                     startDate = startDate,
                     endDate = endDate,
                     metric = goal.metric,
@@ -155,8 +161,7 @@ class StatisticsService(
             0
         }
 
-        // 최고 달성률 계산 (개별 목표별 최고 기록)
-        val maxAchievementRate = calculateMaxAchievementRate(userId, allGoals)
+        val maxAchievementRate = calculateMaxAchievementRateInMemory(userId, allGoals, allLogs)
 
         return GoalAchievementDto(
             achievementRate = achievementRate,
@@ -165,11 +170,10 @@ class StatisticsService(
     }
 
     /**
-     * 특정 기간의 목표 달성 여부 확인
+     * 기간 달성 여부 확인
      */
-    private fun checkPeriodAchievement(
-        userId: Long,
-        bookId: Long,
+    private fun checkPeriodAchievementInMemory(
+        logs: List<ReadingLog>,
         startDate: LocalDate,
         endDate: LocalDate,
         metric: GoalMetric,
@@ -177,17 +181,15 @@ class StatisticsService(
     ): Boolean {
         val actualAmount = when (metric) {
             GoalMetric.PAGE -> {
-                val baselineRecord = readingLogRepository.findLastRecordBeforeDate(
-                    userId = userId,
-                    bookId = bookId,
-                    beforeDate = startDate
-                )
-                val lastRecordInPeriod = readingLogRepository.findLastRecordInDateRange(
-                    userId = userId,
-                    bookId = bookId,
-                    startDate = startDate,
-                    endDate = endDate
-                )
+                // 기간 시작 전 마지막 기록
+                val baselineRecord = logs
+                    .filter { it.recordDate < startDate && it.readQuantity != null }
+                    .maxByOrNull { it.recordDate }
+
+                // 기간 내 마지막 기록
+                val lastRecordInPeriod = logs
+                    .filter { it.recordDate in startDate..endDate && it.readQuantity != null }
+                    .maxByOrNull { it.recordDate }
 
                 val baseline = baselineRecord?.readQuantity ?: 0
                 val endValue = lastRecordInPeriod?.readQuantity ?: return false
@@ -195,13 +197,9 @@ class StatisticsService(
                 (endValue - baseline).coerceAtLeast(0)
             }
             GoalMetric.TIME -> {
-                val durationSeconds = readingLogRepository.sumDurationByUserIdAndBookIdAndDateRange(
-                    userId = userId,
-                    bookId = bookId,
-                    startDate = startDate,
-                    endDate = endDate
-                )
-                durationSeconds / 60  // 분 단위로 변환
+                logs
+                    .filter { it.recordDate in startDate..endDate && it.durationSeconds != null }
+                    .sumOf { it.durationSeconds ?: 0 } / 60
             }
         }
 
@@ -248,7 +246,11 @@ class StatisticsService(
     /**
      * 개별 목표별 최고 달성률 계산
      */
-    private fun calculateMaxAchievementRate(userId: Long, goals: List<ReadingGoal>): Int {
+    private fun calculateMaxAchievementRateInMemory(
+        userId: Long,
+        goals: List<ReadingGoal>,
+        allLogs: Map<Long, List<ReadingLog>>
+    ): Int {
         return goals.maxOfOrNull { goal ->
             val goalStartDate = goal.createdAt.toLocalDate()
             val goalEndDate = if (goal.active) {
@@ -258,31 +260,26 @@ class StatisticsService(
             }
 
             val periods = getPeriodsBetweenDates(goalStartDate, goalEndDate, goal.period)
-            var achievedCount = 0
+            val bookLogs = allLogs[goal.bookId] ?: emptyList()
 
-            periods.forEach { (startDate, endDate) ->
-                val achieved = checkPeriodAchievement(
-                    userId = userId,
-                    bookId = goal.bookId,
+            if (periods.isEmpty()) return@maxOfOrNull 0
+
+            val achievedCount = periods.count { (startDate, endDate) ->
+                checkPeriodAchievementInMemory(
+                    logs = bookLogs,
                     startDate = startDate,
                     endDate = endDate,
                     metric = goal.metric,
                     targetAmount = goal.targetAmount
                 )
-                if (achieved) achievedCount++
             }
 
-            if (periods.isNotEmpty()) {
-                ((achievedCount.toDouble() / periods.size) * 100).roundToInt()
-            } else {
-                0
-            }
+            ((achievedCount.toDouble() / periods.size) * 100).roundToInt()
         } ?: 0
     }
 
     /**
      * 선호 분야 통계
-     * "나의 선호 분야"
      */
     @Transactional(readOnly = true)
     fun getCategoryPreference(userId: Long): CategoryPreferenceResponse {

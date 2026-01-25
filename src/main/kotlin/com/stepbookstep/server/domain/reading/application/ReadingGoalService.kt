@@ -231,7 +231,7 @@ class ReadingGoalService(
                     userId = userId,
                     bookId = bookId,
                     beforeDate = startDate
-                )
+                ).firstOrNull()
 
                 // 2) 기간 내 마지막 기록 = endValue
                 val lastRecordInPeriod = readingLogRepository.findLastRecordInDateRange(
@@ -239,7 +239,7 @@ class ReadingGoalService(
                     bookId = bookId,
                     startDate = startDate,
                     endDate = endDate
-                )
+                ).firstOrNull()
 
                 val baseline = baselineRecord?.readQuantity ?: 0
                 val endValue = lastRecordInPeriod?.readQuantity ?: return 0
@@ -268,7 +268,7 @@ class ReadingGoalService(
         bookId: Long,
         totalPages: Int
     ): Int {
-        val latest = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId)
+        val latest = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId).firstOrNull()
         val currentPage = latest?.readQuantity ?: 0
 
         return if (totalPages > 0) {
