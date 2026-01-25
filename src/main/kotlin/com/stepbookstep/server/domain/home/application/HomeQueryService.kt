@@ -26,9 +26,9 @@ class HomeQueryService(
             }
         }
 
-        val genreBooks = homeCacheService.getGenreBooks(genre.displayName)
-        val under200Books = homeCacheService.getUnder200Books()
-        val bestsellerBooks = homeCacheService.getBestsellerBooks()
+        val genreBooks = homeCacheService.getGenreBooks(genre.displayName).shuffled().take(20)
+        val under200Books = homeCacheService.getUnder200Books().shuffled().take(20)
+        val bestsellerBooks = homeCacheService.getBestsellerBooks().shuffled().take(20)
 
         return HomeResponse(
             genreBooks = GenreBooks.of(genre, genreBooks),
