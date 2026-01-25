@@ -186,6 +186,7 @@ class ReadingGoalService(
                 totalPages = book.itemPage
             )
 
+            // 현재 기간에 달성한 양 계산
             val achievedAmount = calculateAchievedAmount(
                 userId = userId,
                 bookId = goal.bookId,
@@ -292,6 +293,7 @@ class ReadingGoalService(
                 today to today
             }
             GoalPeriod.WEEKLY -> {
+                // 목표 생성일 기준 7일 단위로 계산
                 val daysSinceCreation = java.time.temporal.ChronoUnit.DAYS.between(goalStartDate, today)
                 val weekNumber = (daysSinceCreation / 7).toInt()
                 val startOfCurrentWeek = goalStartDate.plusDays(weekNumber * 7L)
@@ -300,10 +302,10 @@ class ReadingGoalService(
                 startOfCurrentWeek to endOfCurrentWeek
             }
             GoalPeriod.MONTHLY -> {
-                val daysSinceCreation = java.time.temporal.ChronoUnit.DAYS.between(goalStartDate, today)
-                val monthNumber = (daysSinceCreation / 30).toInt()
-                val startOfCurrentMonth = goalStartDate.plusDays(monthNumber * 30L)
-                val endOfCurrentMonth = startOfCurrentMonth.plusDays(29).coerceAtMost(today)
+                // 목표 생성일 기준 1개월 단위로 계산
+                val monthsSinceCreation = java.time.temporal.ChronoUnit.MONTHS.between(goalStartDate, today)
+                val startOfCurrentMonth = goalStartDate.plusMonths(monthsSinceCreation)
+                val endOfCurrentMonth = startOfCurrentMonth.plusMonths(1).minusDays(1).coerceAtMost(today)
 
                 startOfCurrentMonth to endOfCurrentMonth
             }

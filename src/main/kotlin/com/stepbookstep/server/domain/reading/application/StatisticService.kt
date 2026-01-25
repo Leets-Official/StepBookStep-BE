@@ -41,9 +41,8 @@ class StatisticsService(
         val finishedBooks = userBookRepository.findFinishedBooksByUserId(userId)
         val finishedBookCount = finishedBooks.size
 
-        // 책의 실제 무게 합계 (단위: g → kg 변환)
         val totalWeightKg = finishedBooks.sumOf { userBook ->
-            userBook.book.weight.toDouble()
+            (userBook.book.weight ?: 0).toDouble()
         } / 1000.0  // g을 kg으로 변환
 
         return BookSummaryDto(
@@ -229,8 +228,8 @@ class StatisticsService(
                     currentDate.plusDays(6).coerceAtMost(endDate)
                 }
                 GoalPeriod.MONTHLY -> {
-                    // 생성일 기준 30일 단위
-                    currentDate.plusDays(29).coerceAtMost(endDate)
+                    // 생성일 기준 1개월 단위
+                    currentDate.plusMonths(1).minusDays(1).coerceAtMost(endDate)
                 }
             }
 
