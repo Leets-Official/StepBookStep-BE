@@ -18,22 +18,38 @@ object BookSpecification {
     }
 
     /**
-     * 분량 필터 (~200, 201~250, 251~)
+     * 분량 필터 (~200, 201~250, 251~350, 351~500, 501~650, 651~)
+     * 중복 선택 가능 (OR 조건)
      */
-    fun withPageRange(pageRange: String?): Specification<Book> {
+    fun withPageRange(pageRanges: List<String>?): Specification<Book> {
         return Specification { root, _, cb ->
-            if (pageRange.isNullOrBlank()) {
+            if (pageRanges.isNullOrEmpty()) {
                 null
             } else {
-                when (pageRange) {
-                    "~200" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 200)
-                    "201~250" -> cb.and(
-                        cb.greaterThan(root.get<Int>("itemPage"), 200),
-                        cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 250)
-                    )
-                    "251~" -> cb.greaterThan(root.get<Int>("itemPage"), 250)
-                    else -> null
+                val predicates = pageRanges.mapNotNull { pageRange ->
+                    when (pageRange) {
+                        "~200" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 200)
+                        "201~250" -> cb.and(
+                            cb.greaterThan(root.get<Int>("itemPage"), 200),
+                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 250)
+                        )
+                        "251~350" -> cb.and(
+                            cb.greaterThan(root.get<Int>("itemPage"), 250),
+                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 350)
+                        )
+                        "351~500" -> cb.and(
+                            cb.greaterThan(root.get<Int>("itemPage"), 350),
+                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 500)
+                        )
+                        "501~650" -> cb.and(
+                            cb.greaterThan(root.get<Int>("itemPage"), 500),
+                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 650)
+                        )
+                        "651~" -> cb.greaterThan(root.get<Int>("itemPage"), 650)
+                        else -> null
+                    }
                 }
+                if (predicates.isEmpty()) null else cb.or(*predicates.toTypedArray())
             }
         }
     }

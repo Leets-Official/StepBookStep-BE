@@ -65,18 +65,19 @@ class BookController(
 
             ## 필터 옵션
             - **difficulty**: 난이도 (1, 2, 3)
-            - **pageRange**: 분량 (~200, 201~250, 251~)
+            - **pageRange**: 분량 (~200, 201~250, 251~350, 351~500, 501~650, 651~) - 중복 선택 가능
             - **origin**: 국가별 (한국소설, 영미소설, 중국소설, 일본소설, 프랑스소설, 독일소설)
             - **genre**: 장르별 (로맨스, 희곡, 무협소설, 판타지/환상문학, 역사소설, 라이트노벨, 추리/미스터리, 과학소설(SF), 액션/스릴러, 호러/공포소설)
 
             모든 필터는 선택 사항이며, 복수 필터 적용 시 AND 조건으로 검색됩니다.
+            pageRange는 중복 선택 시 OR 조건으로 검색됩니다.
             유효하지 않은 필터 값을 입력하면 400 Bad Request 에러가 반환됩니다.
         """
     )
     @GetMapping("/filter")
     fun filterBooks(
         @Parameter(description = "난이도") @RequestParam(required = false) difficulty: Int?,
-        @Parameter(description = "분량") @RequestParam(required = false) pageRange: String?,
+        @Parameter(description = "분량 (중복 선택 가능)") @RequestParam(required = false) pageRange: List<String>?,
         @Parameter(description = "국가별 분류") @RequestParam(required = false) origin: String?,
         @Parameter(description = "장르별 분류") @RequestParam(required = false) genre: String?
     ): ResponseEntity<ApiResponse<BookFilterResponse>> {
