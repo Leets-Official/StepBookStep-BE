@@ -26,7 +26,7 @@ class ReadingStatusService(
         if (userBookId <= 0) throw CustomException(ErrorCode.INVALID_INPUT)
 
         val userBook = userBookRepository.findById(userBookId)
-            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
+            .orElseThrow { CustomException(ErrorCode.USER_BOOK_NOT_FOUND) }
 
         // 내 서재 항목(userBookId)은 해당 유저만 수정 가능
         if (userBook.userId != userId) {

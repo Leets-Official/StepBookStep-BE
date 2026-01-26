@@ -109,6 +109,7 @@ enum class ErrorCode(
     BOOK_NOT_FOUND(2000, HttpStatus.NOT_FOUND, "해당하는 도서가 존재하지 않습니다."),
     INVALID_GENRE_ID(2001, HttpStatus.BAD_REQUEST, "유효하지 않은 장르 ID입니다. (0~10)"),
     BOOKMARK_NOT_FOUND(2002, HttpStatus.NOT_FOUND, "등록되지 않은 북마크 입니다."),
+    USER_BOOK_NOT_FOUND(2002, HttpStatus.NOT_FOUND,"서재에 해당 도서가 존재하지 않습니다."),
 
 
     // ========================
