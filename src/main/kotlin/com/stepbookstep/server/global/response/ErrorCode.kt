@@ -109,8 +109,11 @@ enum class ErrorCode(
     BOOK_NOT_FOUND(2000, HttpStatus.NOT_FOUND, "해당하는 도서가 존재하지 않습니다."),
     INVALID_GENRE_ID(2001, HttpStatus.BAD_REQUEST, "유효하지 않은 장르 ID입니다. (0~10)"),
     BOOKMARK_NOT_FOUND(2002, HttpStatus.NOT_FOUND, "등록되지 않은 북마크 입니다."),
-    USER_BOOK_NOT_FOUND(2002, HttpStatus.NOT_FOUND,"서재에 해당 도서가 존재하지 않습니다."),
-
+    USER_BOOK_NOT_FOUND(2007, HttpStatus.NOT_FOUND,"서재에 해당 도서가 존재하지 않습니다.
+    INVALID_PAGE_RANGE(2004, HttpStatus.BAD_REQUEST, "유효하지 않은 분량 범위입니다."),
+    INVALID_ORIGIN(2005, HttpStatus.BAD_REQUEST, "유효하지 않은 국가입니다."),
+    INVALID_GENRE(2006, HttpStatus.BAD_REQUEST, "유효하지 않은 장르입니다."),
+    USER_BOOK_NOT_FOUND(2007, HttpStatus.NOT_FOUND,"서재에 해당 도서가 존재하지 않습니다."),
 
     // ========================
     // 3000~3999 : 루틴 관련 에러
