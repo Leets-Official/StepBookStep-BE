@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 /**
  * 인증 인터셉터를 등록하고,
- * 적용/제외할 API 경로를 설정하는 Web MVC 설정 클래스₩
+ * 적용/제외할 API 경로를 설정하는 Web MVC 설정 클래스
  */
 @Configuration
 class WebConfig(
