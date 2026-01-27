@@ -8,6 +8,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       ALADIN_API_KEY: ${ALADIN_API_KEY}
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
     depends_on:
       - mysql
       - redis
