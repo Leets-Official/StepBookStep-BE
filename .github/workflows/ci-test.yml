@@ -28,6 +28,11 @@ jobs:
           mkdir -p src/main/resources
           mkdir -p src/test/resources
           cat <<EOF > src/main/resources/application.yml
+          spring:
+            datasource:
+              url: jdbc:h2:mem:testdb
+              driver-class-name: org.h2.Driver
+
           stepbookstep:
             jwt:
               key: "${{ secrets.JWT_KEY }}"
@@ -35,10 +40,9 @@ jobs:
                 expiration: 3600000
               refresh:
                 expiration: 86400000
-          spring:
-            datasource:
-              url: jdbc:h2:mem:testdb
-              driver-class-name: org.h2.Driver
+
+          kakao:
+            admin-key: "${{ secrets.KAKAO_ADMIN_KEY }}"
           EOF
           cp src/main/resources/application.yml src/test/resources/application.yml
 
