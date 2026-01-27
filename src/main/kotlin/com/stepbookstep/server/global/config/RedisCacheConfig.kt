@@ -72,10 +72,9 @@ class RedisCacheConfig {
 
         val cacheConfigurations = mapOf(
             "genreBooks" to defaultConfig.entryTtl(Duration.ofHours(6)),
-            "under200Books" to defaultConfig.entryTtl(Duration.ofHours(12)),
             "bestsellerBooks" to defaultConfig.entryTtl(Duration.ofHours(12)),
             "bookDetail" to defaultConfig.entryTtl(Duration.ofHours(24)),
-            "booksByLevel" to defaultConfig.entryTtl(Duration.ofHours(6))
+            "booksByLevel" to defaultConfig.entryTtl(Duration.ofHours(1))
         )
 
         return RedisCacheManager.builder(redisConnectionFactory)
