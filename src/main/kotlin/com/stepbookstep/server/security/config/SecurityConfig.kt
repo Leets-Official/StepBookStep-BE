@@ -46,7 +46,7 @@ class SecurityConfig {
             "https://fix-distribute-error.d2q7zz6yc7bc0h.amplifyapp.com"
         )
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        configuration.allowedHeaders = listOf("*")
+        configuration.allowedHeaders = listOf("Authorization", "Content-Type", "Accept")
         configuration.allowCredentials = true
         configuration.maxAge = 3600L
 
