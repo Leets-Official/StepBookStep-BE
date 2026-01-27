@@ -88,9 +88,11 @@ class StatisticsService(
     @Transactional(readOnly = true)
     fun getCumulativeTime(userId: Long): CumulativeTimeDto {
         val totalSeconds = readingLogRepository.sumAllDurationByUserId(userId)
-        val totalMinutes = totalSeconds / 60
-        val hours = totalMinutes / 60
-        val minutes = totalMinutes % 60
+            ?.toLong() ?: 0L
+
+        val totalMinutes = (totalSeconds / 60).toInt()
+        val hours = (totalMinutes / 60)
+        val minutes = (totalMinutes % 60)
 
         return CumulativeTimeDto(
             hours = hours,

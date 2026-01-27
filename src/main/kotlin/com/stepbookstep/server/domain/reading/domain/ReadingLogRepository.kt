@@ -35,7 +35,6 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         WHERE rl.userId = :userId
         AND rl.bookId = :bookId
         AND rl.recordDate BETWEEN :startDate AND :endDate
-        AND rl.durationSeconds IS NOT NULL
     """)
     fun sumDurationByUserIdAndBookIdAndDateRange(
         @Param("userId") userId: Long,
@@ -85,9 +84,8 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         SELECT COALESCE(SUM(rl.durationSeconds), 0)
         FROM ReadingLog rl
         WHERE rl.userId = :userId
-        AND rl.durationSeconds IS NOT NULL
     """)
-    fun sumAllDurationByUserId(@Param("userId") userId: Long): Int
+    fun sumAllDurationByUserId(@Param("userId") userId: Long): Long
 
     /**
      * 특정 월에 완독한 책 수 계산
