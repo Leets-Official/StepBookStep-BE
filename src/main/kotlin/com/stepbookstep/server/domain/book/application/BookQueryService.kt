@@ -22,7 +22,7 @@ class BookQueryService(
     companion object {
         private const val PAGE_SIZE = 20
         private val VALID_DIFFICULTIES = setOf(1, 2, 3)
-        private val VALID_PAGE_RANGES = setOf("~200", "201~250", "251~")
+        private val VALID_PAGE_RANGES = setOf("~200", "201~250", "251~350", "351~500", "501~650", "651~")
         private val VALID_ORIGINS = setOf("한국소설", "영미소설", "중국소설", "일본소설", "프랑스소설", "독일소설")
         private val VALID_GENRES = setOf(
             "로맨스", "희곡", "무협소설", "판타지/환상문학", "역사소설",
@@ -49,15 +49,15 @@ class BookQueryService(
 
     fun filter(
         difficulty: Int?,
-        pageRange: String?,
+        pageRanges: List<String>?,
         origin: String?,
         genre: String?
     ): BookFilterResponse {
         // 유효성 검증
-        validateFilterParams(difficulty, pageRange, origin, genre)
+        validateFilterParams(difficulty, pageRanges, origin, genre)
 
         val spec = Specification.where(BookSpecification.withDifficulty(difficulty))
-            .and(BookSpecification.withPageRange(pageRange))
+            .and(BookSpecification.withPageRange(pageRanges))
             .and(BookSpecification.withOrigin(origin))
             .and(BookSpecification.withGenre(genre))
 
@@ -71,14 +71,14 @@ class BookQueryService(
 
     private fun validateFilterParams(
         difficulty: Int?,
-        pageRange: String?,
+        pageRanges: List<String>?,
         origin: String?,
         genre: String?
     ) {
         if (difficulty != null && difficulty !in VALID_DIFFICULTIES) {
             throw CustomException(ErrorCode.INVALID_DIFFICULTY, null)
         }
-        if (pageRange != null && pageRange !in VALID_PAGE_RANGES) {
+        if (!pageRanges.isNullOrEmpty() && pageRanges.any { it !in VALID_PAGE_RANGES }) {
             throw CustomException(ErrorCode.INVALID_PAGE_RANGE, null)
         }
         if (origin != null && origin !in VALID_ORIGINS) {
