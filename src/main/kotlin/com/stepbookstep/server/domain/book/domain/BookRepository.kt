@@ -9,11 +9,7 @@ import org.springframework.data.repository.query.Param
 
 interface BookRepository : JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
-    @Query(
-        value = "SELECT * FROM books WHERE level = :level ORDER BY RAND() LIMIT 4",
-        nativeQuery = true
-    )
-    fun findRandomByLevel(@Param("level") level: Int): List<Book>
+    fun findAllByLevel(level: Int): List<Book>
 
     @Query("""
         SELECT b FROM Book b

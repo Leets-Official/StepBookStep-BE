@@ -16,4 +16,9 @@ class BookCacheService(
     fun getBookDetail(id: Long): Book? {
         return bookRepository.findById(id).orElse(null)
     }
+
+    @Cacheable(value = ["booksByLevel"], key = "#level")
+    fun getBooksByLevel(level: Int): List<Book> {
+        return bookRepository.findAllByLevel(level)
+    }
 }

@@ -37,7 +37,7 @@ class BookQueryService(
 
     fun search(keyword: String?, level: Int): List<Book> {
         return if (keyword.isNullOrBlank()) {
-            bookRepository.findRandomByLevel(level)
+            bookCacheService.getBooksByLevel(level).shuffled().take(4)
         } else {
             val results = bookRepository.searchByKeyword(keyword)
             if (results.isEmpty()) {
