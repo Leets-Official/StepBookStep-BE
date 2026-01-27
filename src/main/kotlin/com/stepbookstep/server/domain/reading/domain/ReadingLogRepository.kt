@@ -18,14 +18,13 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         AND rl.recordDate BETWEEN :startDate AND :endDate
         AND rl.readQuantity IS NOT NULL
         ORDER BY rl.recordDate DESC, rl.createdAt DESC
-        LIMIT 1
     """)
     fun findLastRecordInDateRange(
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long,
         @Param("startDate") startDate: LocalDate,
         @Param("endDate") endDate: LocalDate
-    ): ReadingLog?
+    ): List<ReadingLog>
 
     /**
      * 특정 기간 동안 사용자가 읽은 총 시간(초) 합계
@@ -36,7 +35,6 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         WHERE rl.userId = :userId
         AND rl.bookId = :bookId
         AND rl.recordDate BETWEEN :startDate AND :endDate
-        AND rl.durationSeconds IS NOT NULL
     """)
     fun sumDurationByUserIdAndBookIdAndDateRange(
         @Param("userId") userId: Long,
@@ -56,13 +54,12 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         AND rl.recordDate < :beforeDate
         AND rl.readQuantity IS NOT NULL
         ORDER BY rl.recordDate DESC, rl.createdAt DESC
-        LIMIT 1
     """)
     fun findLastRecordBeforeDate(
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long,
         @Param("beforeDate") beforeDate: LocalDate
-    ): ReadingLog?
+    ): List<ReadingLog>
 
     /**
      * 사용자의 특정 책에 대한 가장 최근 기록 조회
@@ -74,10 +71,68 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         AND rl.bookId = :bookId
         AND rl.readQuantity IS NOT NULL
         ORDER BY rl.recordDate DESC, rl.createdAt DESC
-        LIMIT 1
     """)
     fun findLatestRecordByUserIdAndBookId(
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long
-    ): ReadingLog?
+    ): List<ReadingLog>
+
+    /**
+     * 사용자의 전체 독서 시간 합계 (초)
+     */
+    @Query("""
+        SELECT COALESCE(SUM(rl.durationSeconds), 0)
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+    """)
+    fun sumAllDurationByUserId(@Param("userId") userId: Long): Long
+
+    /**
+     * 특정 월에 완독한 책 수 계산
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT rl.bookId)
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookStatus = 'FINISHED'
+        AND rl.recordDate BETWEEN :startDate AND :endDate
+    """)
+    fun countFinishedBooksInMonth(
+        @Param("userId") userId: Long,
+        @Param("startDate") startDate: LocalDate,
+        @Param("endDate") endDate: LocalDate
+    ): Int
+    /**
+     * 여러 책의 모든 독서 기록 조회 (목표 달성률 계산 최적화용)
+     */
+    @Query("""
+        SELECT rl
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookId IN :bookIds
+        AND rl.recordDate >= :startDate
+        ORDER BY rl.bookId, rl.recordDate ASC, rl.createdAt ASC
+    """)
+    fun findAllByBooksInDateRange(
+        @Param("userId") userId: Long,
+        @Param("bookIds") bookIds: List<Long>,
+        @Param("startDate") startDate: LocalDate
+    ): List<ReadingLog>
+
+    /**
+     * 연도별 월별 완독 책 수 집계 (월별 그래프 최적화용)
+     * 단일 쿼리로 모든 월 데이터 조회
+     */
+    @Query("""
+        SELECT FUNCTION('MONTH', rl.recordDate) as month, COUNT(DISTINCT rl.bookId) as count
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookStatus = 'FINISHED'
+        AND FUNCTION('YEAR', rl.recordDate) = :year
+        GROUP BY FUNCTION('MONTH', rl.recordDate)
+    """)
+    fun countFinishedBooksGroupedByMonth(
+        @Param("userId") userId: Long,
+        @Param("year") year: Int
+    ): List<Array<Any>>
 }

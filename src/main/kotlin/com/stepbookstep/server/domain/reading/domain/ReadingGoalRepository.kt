@@ -1,6 +1,8 @@
 package com.stepbookstep.server.domain.reading.domain
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface ReadingGoalRepository : JpaRepository<ReadingGoal, Long> {
     fun findByUserIdAndBookIdAndActiveTrue(userId: Long, bookId: Long): ReadingGoal?
@@ -15,4 +17,16 @@ interface ReadingGoalRepository : JpaRepository<ReadingGoal, Long> {
      * 완독/중지 후에도 목표를 표시하기 위해 사용
      */
     fun findTopByUserIdAndBookIdOrderByCreatedAtDesc(userId: Long, bookId: Long): ReadingGoal?
+
+    /**
+     * 사용자의 모든 목표 조회 (활성/비활성 포함)
+     * 통계 계산에 사용
+     */
+    @Query("""
+        SELECT rg
+        FROM ReadingGoal rg
+        WHERE rg.userId = :userId
+        ORDER BY rg.createdAt ASC
+    """)
+    fun findAllByUserId(@Param("userId") userId: Long): List<ReadingGoal>
 }

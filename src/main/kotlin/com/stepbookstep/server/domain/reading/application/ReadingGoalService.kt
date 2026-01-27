@@ -107,7 +107,7 @@ class ReadingGoalService(
     }
 
     /**
-     * 특정 책의 활성 목표 조회 (진행률 포함)
+     * 특정 책의 활성 목표 조회 (진행률 + 달성량 포함)
      */
     @Transactional(readOnly = true)
     fun getActiveGoalWithProgress(userId: Long, bookId: Long): ReadingGoalWithProgress? {
@@ -118,16 +118,26 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId, book.itemPage)
+
+        // 현재 기간 달성량 계산 추가
+        val achievedAmount = calculateAchievedAmount(
+            userId = userId,
+            bookId = bookId,
+            period = goal.period,
+            metric = goal.metric,
+            goalCreatedAt = goal.createdAt
+        )
 
         return ReadingGoalWithProgress(
             goal = goal,
-            currentProgress = currentProgress
+            currentProgress = currentProgress,
+            achievedAmount = achievedAmount
         )
     }
 
     /**
-     * 특정 책의 목표 조회 (활성/비활성 무관, 진행률 포함)
+     * 특정 책의 목표 조회 (활성/비활성 무관, 진행률 + 달성량 포함)
      * - 완독/중지 상태에서도 목표를 표시하기 위해 사용
      * - 가장 최근 목표를 조회
      */
@@ -140,11 +150,21 @@ class ReadingGoalService(
             CustomException(ErrorCode.BOOK_NOT_FOUND)
         }
 
-        val currentProgress = calculateCurrentProgress(userId, bookId,  book.itemPage)
+        val currentProgress = calculateCurrentProgress(userId, bookId, book.itemPage)
+
+        // 현재 기간 달성량 계산 추가
+        val achievedAmount = calculateAchievedAmount(
+            userId = userId,
+            bookId = bookId,
+            period = goal.period,
+            metric = goal.metric,
+            goalCreatedAt = goal.createdAt
+        )
 
         return ReadingGoalWithProgress(
             goal = goal,
-            currentProgress = currentProgress
+            currentProgress = currentProgress,
+            achievedAmount = achievedAmount
         )
     }
 
@@ -171,7 +191,8 @@ class ReadingGoalService(
                 userId = userId,
                 bookId = goal.bookId,
                 period = goal.period,
-                metric = goal.metric
+                metric = goal.metric,
+                goalCreatedAt = goal.createdAt
             )
 
             RoutineWithDetails(
@@ -198,9 +219,10 @@ class ReadingGoalService(
         userId: Long,
         bookId: Long,
         period: GoalPeriod,
-        metric: GoalMetric
+        metric: GoalMetric,
+        goalCreatedAt: OffsetDateTime
     ): Int {
-        val (startDate, endDate) = getPeriodDateRange(period)
+        val (startDate, endDate) = getPeriodDateRange(period, goalCreatedAt)
 
         return when (metric) {
             GoalMetric.PAGE -> {
@@ -209,7 +231,7 @@ class ReadingGoalService(
                     userId = userId,
                     bookId = bookId,
                     beforeDate = startDate
-                )
+                ).firstOrNull()
 
                 // 2) 기간 내 마지막 기록 = endValue
                 val lastRecordInPeriod = readingLogRepository.findLastRecordInDateRange(
@@ -217,7 +239,7 @@ class ReadingGoalService(
                     bookId = bookId,
                     startDate = startDate,
                     endDate = endDate
-                )
+                ).firstOrNull()
 
                 val baseline = baselineRecord?.readQuantity ?: 0
                 val endValue = lastRecordInPeriod?.readQuantity ?: return 0
@@ -246,7 +268,7 @@ class ReadingGoalService(
         bookId: Long,
         totalPages: Int
     ): Int {
-        val latest = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId)
+        val latest = readingLogRepository.findLatestRecordByUserIdAndBookId(userId, bookId).firstOrNull()
         val currentPage = latest?.readQuantity ?: 0
 
         return if (totalPages > 0) {
@@ -257,21 +279,35 @@ class ReadingGoalService(
 
     /**
      * 기간에 따른 날짜 범위 계산
+     * 목표 생성일 기준으로 계산
      */
-    private fun getPeriodDateRange(period: GoalPeriod): Pair<LocalDate, LocalDate> {
+    private fun getPeriodDateRange(
+        period: GoalPeriod,
+        goalCreatedAt: OffsetDateTime
+    ): Pair<LocalDate, LocalDate> {
         val today = LocalDate.now()
+        val goalStartDate = goalCreatedAt.toLocalDate()
 
         return when (period) {
             GoalPeriod.DAILY -> {
                 today to today
             }
             GoalPeriod.WEEKLY -> {
-                val startOfWeek = today.minusDays(today.dayOfWeek.value.toLong() - 1)
-                startOfWeek to today
+                // 목표 생성일 기준 7일 단위로 계산
+                val daysSinceCreation = java.time.temporal.ChronoUnit.DAYS.between(goalStartDate, today)
+                val weekNumber = (daysSinceCreation / 7).toInt()
+                val startOfCurrentWeek = goalStartDate.plusDays(weekNumber * 7L)
+                val endOfCurrentWeek = startOfCurrentWeek.plusDays(6).coerceAtMost(today)
+
+                startOfCurrentWeek to endOfCurrentWeek
             }
             GoalPeriod.MONTHLY -> {
-                val startOfMonth = today.withDayOfMonth(1)
-                startOfMonth to today
+                // 목표 생성일 기준 1개월 단위로 계산
+                val monthsSinceCreation = java.time.temporal.ChronoUnit.MONTHS.between(goalStartDate, today)
+                val startOfCurrentMonth = goalStartDate.plusMonths(monthsSinceCreation)
+                val endOfCurrentMonth = startOfCurrentMonth.plusMonths(1).minusDays(1).coerceAtMost(today)
+
+                startOfCurrentMonth to endOfCurrentMonth
             }
         }
     }
@@ -282,7 +318,8 @@ class ReadingGoalService(
  */
 data class ReadingGoalWithProgress(
     val goal: ReadingGoal,
-    val currentProgress: Int
+    val currentProgress: Int,
+    val achievedAmount: Int  // 현재 기간 달성량
 )
 
 /**
