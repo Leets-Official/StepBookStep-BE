@@ -2,11 +2,10 @@ package com.stepbookstep.server.domain.user.domain
 
 import org.springframework.data.jpa.repository.JpaRepository
 
-interface UserCategoryPreferenceRepository : JpaRepository<UserCategoryPreference, Long> {
-
+interface UserGenrePreferenceRepository : JpaRepository<UserGenrePreference, Long> {
+    fun findAllByUserId(userId: Long): List<UserGenrePreference>
     fun deleteAllByUserId(userId: Long)
-    fun deleteByUserIdAndCategoryIdIn(userId: Long, categoryIds: Set<Long>)
-    fun findAllByUserId(userId: Long): List<UserCategoryPreference>
+    fun deleteByUserIdAndGenreIdIn(userId: Long, genreIds: Set<Long>)
     fun existsAllByIds(ids: Set<Long>): Boolean {
         return ids.all { existsById(it) }
     }

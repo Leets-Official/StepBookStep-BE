@@ -2,7 +2,6 @@ package com.stepbookstep.server.domain.onboarding.application.dto
 
 import com.stepbookstep.server.domain.onboarding.domain.enum.*
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 
 data class OnboardingSaveRequest(
@@ -12,8 +11,8 @@ data class OnboardingSaveRequest(
     @field:NotNull
     val levelAnswers: LevelAnswers,
 
-    @field:NotEmpty
-    val categoryIds: List<Int>
+    val categoryIds: List<Long> = emptyList(),
+    val genreIds: List<Long> = emptyList()
 )
 
 data class LevelAnswers(
