@@ -7,12 +7,12 @@ object BookSpecification {
     /**
      * 난이도 필터 (1, 2, 3)
      */
-    fun withDifficulty(difficulty: Int?): Specification<Book> {
+    fun withLevel(level: Int?): Specification<Book> {
         return Specification { root, _, cb ->
-            if (difficulty == null) {
+            if (level == null) {
                 null
             } else {
-                cb.equal(root.get<Int>("level"), difficulty)
+                cb.equal(root.get<Int>("level"), level)
             }
         }
     }
