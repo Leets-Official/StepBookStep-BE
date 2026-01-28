@@ -59,7 +59,7 @@ class Book(
     val categoryId: Long,
 
     @Column(name = "genre_id", nullable = false)
-    val genreId: Long,
+    val genreId: Long?,
 
     @Column(nullable = false)
     val weight: Int = 0,
