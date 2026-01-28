@@ -9,7 +9,7 @@ import java.time.LocalDateTime
     uniqueConstraints = [
         UniqueConstraint(
             name = "uk_user_category",
-            columnNames = ["user_id", "category_id"]
+            columnNames = ["user_id", "category_id", "genre_id"]
         )
     ]
 )
@@ -23,7 +23,10 @@ class UserCategoryPreference(
     val userId: Long,
 
     @Column(name = "category_id", nullable = false)
-    val categoryId: Int,
+    val categoryId: Long,
+
+    @Column(name = "genre_id", nullable = false)
+    val genreId: Long,
 
     @Column(name = "created_at", nullable = false)
     var createdAt: LocalDateTime = LocalDateTime.now()

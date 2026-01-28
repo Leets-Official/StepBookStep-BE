@@ -29,46 +29,37 @@ class MyProfileService(
     /**
      * 사용자의 선호 레벨/분야를 수정
      */
-        @Transactional
-        fun updatePreferences(userId: Long, request: UpdatePreferencesRequest) {
-            val user = userRepository.findById(userId)
-                .orElseThrow { CustomException(ErrorCode.USER_NOT_FOUND) }
+    @Transactional
+    fun updatePreferences(userId: Long, request: UpdatePreferencesRequest) {
+        val user = userRepository.findById(userId)
+            .orElseThrow { CustomException(ErrorCode.USER_NOT_FOUND) }
 
         if (request.level !in VALID_LEVELS) {
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
-        val requestCategoryIds = request.categoryIds.distinct()
-        if (requestCategoryIds.isEmpty()) {
+        val pairs = request.preferences
+            .map { it.categoryId to it.genreId }
+            .distinct()
+
+        if (pairs.isEmpty()) {
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
         user.level = request.level
         user.updatedAt = OffsetDateTime.now()
 
-        val existingPreferences = userCategoryPreferenceRepository.findAllByUserId(userId)
-        val existingCategoryIds = existingPreferences.map { it.categoryId }.toSet()
-        val requestCategoryIdSet = requestCategoryIds.toSet()
+        userCategoryPreferenceRepository.deleteAllByUserId(userId)
 
-        val deleteCategoryIds = existingCategoryIds - requestCategoryIdSet
-        if (deleteCategoryIds.isNotEmpty()) {
-            userCategoryPreferenceRepository.deleteByUserIdAndCategoryIdIn(
-                userId,
-                deleteCategoryIds
+        val entities = pairs.map { (categoryId, genreId) ->
+            UserCategoryPreference(
+                userId = userId,
+                categoryId = categoryId,
+                genreId = genreId
             )
         }
-
-        val insertCategoryIds = requestCategoryIdSet - existingCategoryIds
-        if (insertCategoryIds.isNotEmpty()) {
-            val newEntities = insertCategoryIds.map { categoryId ->
-                UserCategoryPreference(
-                    userId = userId,
-                    categoryId = categoryId
-                )
-            }
-            userCategoryPreferenceRepository.saveAll(newEntities)
-        }
-        }
+        userCategoryPreferenceRepository.saveAll(entities)
+    }
 
     /**
      * 닉네임 수정
