@@ -47,13 +47,27 @@ class BookController(
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 
-    @Operation(summary = "도서 검색", description = "키워드로 검색하거나 레벨별 도서 목록을 조회합니다.")
+    @Operation(
+        summary = "도서 검색",
+        description = """
+            키워드로 검색하거나 사용자 등급에 맞는 도서 목록을 조회합니다.
+
+            ## 키워드 입력 시
+            - 제목, 저자, 출판사에서 키워드를 검색합니다.
+
+            ## 키워드 미입력 시
+            - 사용자의 독서 등급(읽는 중/완독한 도서의 평균 score)을 기반으로 레벨을 결정합니다.
+            - score 0~35 → level 1, score 36~65 → level 2, score 66~100 → level 3
+            - 해당 레벨의 도서 4권을 랜덤하게 반환합니다.
+            - 독서 히스토리가 없으면 level 1 도서를 반환합니다.
+        """
+    )
     @GetMapping("/search")
     fun searchBooks(
-        @Parameter(description = "검색 키워드 (제목, 저자, 출판사)") @RequestParam(required = false) keyword: String?,
-        @Parameter(description = "사용자 레벨") @RequestParam level: Int
+        @Parameter(hidden = true) @LoginUserId userId: Long,
+        @Parameter(description = "검색 키워드 (제목, 저자, 출판사)") @RequestParam(required = false) keyword: String?
     ): ResponseEntity<ApiResponse<List<BookSearchResponse>>> {
-        val books = bookQueryService.search(keyword, level)
+        val books = bookQueryService.search(userId, keyword)
         val response = books.map { BookSearchResponse.from(it) }
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
@@ -64,7 +78,7 @@ class BookController(
             선택한 필터 조건에 맞는 도서 목록을 조회합니다. (최대 20권씩 페이징)
 
             ## 필터 옵션
-            - **difficulty**: 난이도 (1, 2, 3)
+            - **level**: 난이도 (1, 2, 3)
             - **pageRange**: 분량 (~200, 201~250, 251~350, 351~500, 501~650, 651~) - 중복 선택 가능
             - **origin**: 국가별 (한국소설, 영미소설, 중국소설, 일본소설, 프랑스소설, 독일소설)
             - **genre**: 장르별 (로맨스, 희곡, 무협소설, 판타지/환상문학, 역사소설, 라이트노벨, 추리/미스터리, 과학소설(SF), 액션/스릴러, 호러/공포소설)
@@ -76,12 +90,12 @@ class BookController(
     )
     @GetMapping("/filter")
     fun filterBooks(
-        @Parameter(description = "난이도") @RequestParam(required = false) difficulty: Int?,
+        @Parameter(description = "난이도") @RequestParam(required = false) level: Int?,
         @Parameter(description = "분량 (중복 선택 가능)") @RequestParam(required = false) pageRange: List<String>?,
         @Parameter(description = "국가별 분류") @RequestParam(required = false) origin: String?,
         @Parameter(description = "장르별 분류") @RequestParam(required = false) genre: String?
     ): ResponseEntity<ApiResponse<BookFilterResponse>> {
-        val response = bookQueryService.filter(difficulty, pageRange, origin, genre)
+        val response = bookQueryService.filter(level, pageRange, origin, genre)
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 }
