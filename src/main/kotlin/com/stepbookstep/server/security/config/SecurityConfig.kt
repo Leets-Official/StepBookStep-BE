@@ -42,10 +42,14 @@ class SecurityConfig {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf(
+
+        val origins = mutableListOf(
             "http://localhost:5173",      // Vite
             "https://fix-distribute-error.d2q7zz6yc7bc0h.amplifyapp.com"
         )
+        System.getenv("CORS_ALLOWED_ORIGIN")?.takeIf { it.isNotBlank() }?.let { origins.add(it) }
+
+        configuration.allowedOrigins = origins
         configuration.allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         configuration.allowedHeaders = listOf("Authorization", "Content-Type", "Accept")
         configuration.allowCredentials = true
