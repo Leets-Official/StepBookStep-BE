@@ -4,15 +4,13 @@ import com.stepbookstep.server.domain.book.domain.Book
 
 data class BookDetailResponse(
     val bookInfo: BookInfo,
-    val isBookmarked: Boolean,
-    val myRecord: MyRecord?
+    val isBookmarked: Boolean
 ) {
     companion object {
-        fun from(book: Book, isBookmarked: Boolean = false, myRecord: MyRecord? = null): BookDetailResponse {
+        fun from(book: Book, isBookmarked: Boolean = false): BookDetailResponse {
             return BookDetailResponse(
                 bookInfo = BookInfo.from(book),
-                isBookmarked = isBookmarked,
-                myRecord = myRecord
+                isBookmarked = isBookmarked
             )
         }
     }
@@ -29,7 +27,8 @@ data class BookInfo(
     val priceStandard: Int,
     val link: String,
     val description: String,
-    val tags: List<String>
+    val tags: List<String>,
+    val level: Int
 ) {
     companion object {
         fun from(book: Book): BookInfo {
@@ -44,7 +43,8 @@ data class BookInfo(
                 priceStandard = book.priceStandard,
                 link = book.aladinLink,
                 description = book.description,
-                tags = BookTagBuilder.buildTags(book)
+                tags = BookTagBuilder.buildTags(book),
+                level = book.level
             )
         }
     }
@@ -73,10 +73,3 @@ object BookTagBuilder {
     }
 }
 
-data class MyRecord(
-    val status: String,
-    val startDate: String?,
-    val endDate: String?,
-    val currentPage: Int,
-    val readPercent: Int
-)
