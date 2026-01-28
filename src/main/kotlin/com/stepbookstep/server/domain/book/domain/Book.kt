@@ -58,7 +58,7 @@ class Book(
     @Column(name = "category_id", nullable = false)
     val categoryId: Long,
 
-    @Column(name = "genre_id", nullable = false)
+    @Column(name = "genre_id", nullable = true)
     val genreId: Long?,
 
     @Column(nullable = false)
