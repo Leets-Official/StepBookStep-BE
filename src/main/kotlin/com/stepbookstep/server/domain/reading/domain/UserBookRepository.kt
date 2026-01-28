@@ -20,4 +20,16 @@ interface UserBookRepository : JpaRepository<UserBook, Long> {
         ORDER BY ub.finishedAt DESC
     """)
     fun findFinishedBooksByUserId(@Param("userId") userId: Long): List<UserBook>
+
+    /**
+     * 사용자의 읽는 중/완독한 책 목록 조회 (추천/검색용)
+     */
+    @Query("""
+        SELECT ub
+        FROM UserBook ub
+        JOIN FETCH ub.book
+        WHERE ub.userId = :userId
+        AND ub.status IN ('READING', 'FINISHED')
+    """)
+    fun findReadingAndFinishedBooksByUserId(@Param("userId") userId: Long): List<UserBook>
 }
