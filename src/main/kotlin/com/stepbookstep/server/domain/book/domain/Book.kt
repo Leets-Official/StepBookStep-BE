@@ -71,6 +71,9 @@ class Book(
     @Column(nullable = false)
     val level: Int = 1,
 
+    @Column(nullable = false)
+    val score: Int = 0,
+
     @Enumerated(EnumType.STRING)
     @Column(name = "vocab_level", nullable = false, length = 20)
     val vocabLevel: VocabLevel = VocabLevel.EASY,
