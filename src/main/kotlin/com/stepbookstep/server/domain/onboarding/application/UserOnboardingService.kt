@@ -5,6 +5,8 @@ import com.stepbookstep.server.domain.onboarding.application.dto.OnboardingSaveR
 import com.stepbookstep.server.domain.onboarding.application.dto.OnboardingSaveResponse
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreference
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreferenceRepository
+import com.stepbookstep.server.domain.user.domain.UserGenrePreference
+import com.stepbookstep.server.domain.user.domain.UserGenrePreferenceRepository
 import com.stepbookstep.server.domain.user.domain.UserRepository
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
@@ -23,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 class UserOnboardingService(
     private val userRepository: UserRepository,
     private val userCategoryPreferenceRepository: UserCategoryPreferenceRepository,
+    private val userGenrePreferenceRepository: UserGenrePreferenceRepository,
     private val ruleEngine: OnboardingRuleEngine
 ) {
     private val nicknameRegex = Regex("^[가-힣a-zA-Z0-9]{2,15}$")
@@ -52,11 +55,17 @@ class UserOnboardingService(
         user.isOnboarded = true
 
         userCategoryPreferenceRepository.deleteAllByUserId(userId)
+        userGenrePreferenceRepository.deleteAllByUserId(userId)
 
-        val preferences = request.categoryIds.distinct().map { categoryId ->
-            UserCategoryPreference(userId = userId, categoryId = categoryId)
+        val categoryInserts = request.categoryIds.distinct().map { cid ->
+            UserCategoryPreference(userId = userId, categoryId = cid)
         }
-        userCategoryPreferenceRepository.saveAll(preferences)
+        userCategoryPreferenceRepository.saveAll(categoryInserts)
+
+        val genreInserts = request.genreIds.distinct().map { gid ->
+            UserGenrePreference(userId = userId, genreId = gid)
+        }
+        userGenrePreferenceRepository.saveAll(genreInserts)
 
         val result = ruleEngine.calculate(request.levelAnswers)
 

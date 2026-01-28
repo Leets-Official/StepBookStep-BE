@@ -4,6 +4,8 @@ import com.stepbookstep.server.domain.mypage.application.dto.UpdateNicknameReque
 import com.stepbookstep.server.domain.mypage.application.dto.UpdatePreferencesRequest
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreference
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreferenceRepository
+import com.stepbookstep.server.domain.user.domain.UserGenrePreference
+import com.stepbookstep.server.domain.user.domain.UserGenrePreferenceRepository
 import com.stepbookstep.server.domain.user.domain.UserRepository
 import com.stepbookstep.server.external.kakao.KakaoUnlinkClient
 import com.stepbookstep.server.global.response.CustomException
@@ -19,6 +21,7 @@ class MyProfileService(
     private val userRepository: UserRepository,
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userCategoryPreferenceRepository: UserCategoryPreferenceRepository,
+    private val userGenrePreferenceRepository: UserGenrePreferenceRepository,
     private val kakaoUnlinkClient: KakaoUnlinkClient
 
 ) {
@@ -38,27 +41,46 @@ class MyProfileService(
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
-        val pairs = request.preferences
-            .map { it.categoryId to it.genreId }
-            .distinct()
-
-        if (pairs.isEmpty()) {
-            throw CustomException(ErrorCode.INVALID_INPUT)
-        }
-
         user.level = request.level
         user.updatedAt = OffsetDateTime.now()
 
-        userCategoryPreferenceRepository.deleteAllByUserId(userId)
+        // ===== category 처리 =====
+        val requestCategoryIds = request.categoryIds.distinct().toSet()
 
-        val entities = pairs.map { (categoryId, genreId) ->
-            UserCategoryPreference(
-                userId = userId,
-                categoryId = categoryId,
-                genreId = genreId
-            )
+        val existingCategories = userCategoryPreferenceRepository.findAllByUserId(userId)
+        val existingCategoryIds = existingCategories.map { it.categoryId }.toSet()
+
+        val deleteCategoryIds = existingCategoryIds - requestCategoryIds
+        if (deleteCategoryIds.isNotEmpty()) {
+            userCategoryPreferenceRepository.deleteByUserIdAndCategoryIdIn(userId, deleteCategoryIds)
         }
-        userCategoryPreferenceRepository.saveAll(entities)
+
+        val insertCategoryIds = requestCategoryIds - existingCategoryIds
+        if (insertCategoryIds.isNotEmpty()) {
+            val inserts = insertCategoryIds.map { cid ->
+                UserCategoryPreference(userId = userId, categoryId = cid)
+            }
+            userCategoryPreferenceRepository.saveAll(inserts)
+        }
+
+        // ===== genre 처리 =====
+        val requestGenreIds = request.genreIds.distinct().toSet()
+
+        val existingGenres = userGenrePreferenceRepository.findAllByUserId(userId)
+        val existingGenreIds = existingGenres.map { it.genreId }.toSet()
+
+        val deleteGenreIds = existingGenreIds - requestGenreIds
+        if (deleteGenreIds.isNotEmpty()) {
+            userGenrePreferenceRepository.deleteByUserIdAndGenreIdIn(userId, deleteGenreIds)
+        }
+
+        val insertGenreIds = requestGenreIds - existingGenreIds
+        if (insertGenreIds.isNotEmpty()) {
+            val inserts = insertGenreIds.map { gid ->
+                UserGenrePreference(userId = userId, genreId = gid)
+            }
+            userGenrePreferenceRepository.saveAll(inserts)
+        }
     }
 
     /**

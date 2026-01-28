@@ -1,11 +1,11 @@
 package com.stepbookstep.server.domain.mypage.application.dto
 
-data class UpdatePreferencesRequest(
-    val level: Int,
-    val preferences: List<CategoryGenrePreferenceRequest>
-)
+import jakarta.validation.constraints.NotNull
 
-data class CategoryGenrePreferenceRequest(
-    val categoryId: Long,
-    val genreId: Long
+data class UpdatePreferencesRequest(
+    @field:NotNull
+    val level: Int,
+
+    val categoryIds: List<Long> = emptyList(),
+    val genreIds: List<Long> = emptyList()
 )
