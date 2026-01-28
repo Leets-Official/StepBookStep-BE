@@ -26,4 +26,19 @@ class HomeCacheService(
     fun getBestsellerBooks(): List<Book> {
         return bookRepository.findAllBestsellers()
     }
+
+    @Cacheable(value = ["level3Books"])
+    fun getLevel3Books(): List<Book> {
+        return bookRepository.findAllByLevel3()
+    }
+
+    @Cacheable(value = ["categoryBooks"], key = "#categoryId")
+    fun getBooksByCategoryId(categoryId: Long): List<Book> {
+        return bookRepository.findAllByCategoryId(categoryId)
+    }
+
+    @Cacheable(value = ["genreIdBooks"], key = "#genreId")
+    fun getBooksByGenreId(genreId: Long): List<Book> {
+        return bookRepository.findAllByGenreId(genreId)
+    }
 }
