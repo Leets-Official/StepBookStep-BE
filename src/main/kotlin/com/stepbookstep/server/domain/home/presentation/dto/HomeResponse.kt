@@ -1,24 +1,32 @@
 package com.stepbookstep.server.domain.home.presentation.dto
 
 import com.stepbookstep.server.domain.book.domain.Book
-import com.stepbookstep.server.domain.book.domain.BookGenre
 
 data class HomeResponse(
+    val readingStatistics: ReadingStatistics,
     val genreBooks: GenreBooks,
     val recommendations: Recommendations
-    // TODO: 독서 통계 섹션 - 독서 기록 API 연동 후 추가 예정
+)
+
+data class ReadingStatistics(
+    val finishedBookCount: Int,
+    val cumulativeHours: Int,
+    val achievementRate: Int,
+    val favoriteCategory: String?
 )
 
 data class GenreBooks(
-    val genre: String,
-    val genreId: Int,
+    val type: String,
+    val id: Long,
+    val name: String,
     val books: List<BookItem>
 ) {
     companion object {
-        fun of(genre: BookGenre, books: List<Book>): GenreBooks {
+        fun of(type: String, id: Long, name: String, books: List<Book>): GenreBooks {
             return GenreBooks(
-                genre = genre.displayName,
-                genreId = genre.ordinal,
+                type = type,
+                id = id,
+                name = name,
                 books = books.map { BookItem.from(it) }
             )
         }
@@ -26,18 +34,19 @@ data class GenreBooks(
 }
 
 data class Recommendations(
-    val under200: List<BookItem>,
+    val lightReads: List<BookItem>,
     val levelUp: List<BookItem>,
     val bestseller: List<BookItem>
 ) {
     companion object {
         fun of(
-            under200Books: List<Book>,
+            lightReadsBooks: List<Book>,
+            levelUpBooks: List<Book>,
             bestsellerBooks: List<Book>
         ): Recommendations {
             return Recommendations(
-                under200 = under200Books.map { BookItem.from(it) },
-                levelUp = emptyList(), // TODO: 레벨업 도전 도서 - API 연동 후 구현 예정
+                lightReads = lightReadsBooks.map { BookItem.from(it) },
+                levelUp = levelUpBooks.map { BookItem.from(it) },
                 bestseller = bestsellerBooks.map { BookItem.from(it) }
             )
         }

@@ -25,4 +25,19 @@ interface BookRepository : JpaRepository<Book, Long>, JpaSpecificationExecutor<B
 
     @Query("SELECT b FROM Book b WHERE b.isBestseller = true")
     fun findAllBestsellers(): List<Book>
+
+    @Query("SELECT b FROM Book b WHERE b.itemPage BETWEEN :minPage AND :maxPage")
+    fun findAllByPageRange(@Param("minPage") minPage: Int, @Param("maxPage") maxPage: Int): List<Book>
+
+    @Query("SELECT b FROM Book b WHERE b.score BETWEEN :minScore AND :maxScore")
+    fun findAllByScoreRange(@Param("minScore") minScore: Int, @Param("maxScore") maxScore: Int): List<Book>
+
+    @Query("SELECT b FROM Book b WHERE b.level = 3")
+    fun findAllByLevel3(): List<Book>
+
+    @Query("SELECT b FROM Book b WHERE b.categoryId = :categoryId")
+    fun findAllByCategoryId(@Param("categoryId") categoryId: Long): List<Book>
+
+    @Query("SELECT b FROM Book b WHERE b.genreId = :genreId")
+    fun findAllByGenreId(@Param("genreId") genreId: Long): List<Book>
 }
