@@ -7,6 +7,7 @@ import com.stepbookstep.server.global.response.ApiResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import com.stepbookstep.server.security.jwt.LoginUserId
+import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -17,11 +18,19 @@ class MyProfileController(
     private val myProfileService: MyProfileService
 ) {
 
-    @Operation(summary = "선호 레벨/분야 수정", description = "사용자의 선호 레벨과 선호 분야(분류/장르)를 수정합니다.")
+    @Operation(
+        summary = "선호 레벨/분야 수정",
+        description = """
+            사용자의 독서 난이도와 선호 분야를 수정합니다.
+            - 난이도(level)는 필수 값입니다.
+            - 분류(categoryIds)는 국가/권역 기준의 분류입니다.
+            - 장르(genreIds)는 작품의 장르입니다.
+        """
+    )
     @PatchMapping("/preferences")
     fun updatePreferences(
         @LoginUserId userId: Long,
-        @RequestBody request: UpdatePreferencesRequest
+        @RequestBody @Valid request: UpdatePreferencesRequest
     ): ResponseEntity<ApiResponse<Void>> {
         myProfileService.updatePreferences(userId, request)
         return ResponseEntity.ok(ApiResponse.Companion.ok(null))

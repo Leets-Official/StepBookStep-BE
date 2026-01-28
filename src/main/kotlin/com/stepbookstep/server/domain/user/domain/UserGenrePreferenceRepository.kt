@@ -6,4 +6,7 @@ interface UserGenrePreferenceRepository : JpaRepository<UserGenrePreference, Lon
     fun findAllByUserId(userId: Long): List<UserGenrePreference>
     fun deleteAllByUserId(userId: Long)
     fun deleteByUserIdAndGenreIdIn(userId: Long, genreIds: Set<Long>)
+    fun existsAllByIds(ids: Set<Long>): Boolean {
+        return ids.all { existsById(it) }
+    }
 }

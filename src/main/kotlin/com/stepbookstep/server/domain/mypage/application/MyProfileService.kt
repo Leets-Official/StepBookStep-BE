@@ -41,12 +41,22 @@ class MyProfileService(
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
+        val requestCategoryIds = request.categoryIds.distinct().toSet()
+        val requestGenreIds = request.genreIds.distinct().toSet()
+
+        // 존재 여부 검증
+        if (!userCategoryPreferenceRepository.existsAllByIds(requestCategoryIds)) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+
+        if (!userGenrePreferenceRepository.existsAllByIds(requestGenreIds)) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+
         user.level = request.level
         user.updatedAt = OffsetDateTime.now()
 
         // ===== category 처리 =====
-        val requestCategoryIds = request.categoryIds.distinct().toSet()
-
         val existingCategories = userCategoryPreferenceRepository.findAllByUserId(userId)
         val existingCategoryIds = existingCategories.map { it.categoryId }.toSet()
 
@@ -64,8 +74,6 @@ class MyProfileService(
         }
 
         // ===== genre 처리 =====
-        val requestGenreIds = request.genreIds.distinct().toSet()
-
         val existingGenres = userGenrePreferenceRepository.findAllByUserId(userId)
         val existingGenreIds = existingGenres.map { it.genreId }.toSet()
 
@@ -118,17 +126,8 @@ class MyProfileService(
         val user = userRepository.findById(userId)
             .orElseThrow { CustomException(ErrorCode.USER_NOT_FOUND) }
 
-        user.providerUserId.let { kakaoUserId ->
-            try {
-                kakaoUnlinkClient.unlink(kakaoUserId)
-            } catch (e: Exception) {
-                log.warn(
-                    "Kakao unlink failed. userId={}, kakaoUserId={}",
-                    userId,
-                    kakaoUserId,
-                    e
-                )
-            }
+        if (user.provider == "KAKAO") {
+            kakaoUnlinkClient.unlink(user.providerUserId)
         }
 
         refreshTokenRepository.deleteByUserId(userId)

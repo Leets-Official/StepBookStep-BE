@@ -96,10 +96,8 @@ enum class ErrorCode(
     // 1000~1999 : 유저 관련 응답 에러
     // ========================
 
-    // 유저 없음
     NOT_USER(1000, HttpStatus.NOT_FOUND, "해당하는 유저가 존재하지 않습니다."),
-
-    // 중복 확인
+    KAKAO_UNLINK_FAILED(1001, HttpStatus.BAD_GATEWAY, "카카오 계정 연결 해제에 실패했습니다."),
     DUPLICATED_NICKNAME(1300, HttpStatus.CONFLICT, "이미 사용 중인 닉네임입니다."),
 
 

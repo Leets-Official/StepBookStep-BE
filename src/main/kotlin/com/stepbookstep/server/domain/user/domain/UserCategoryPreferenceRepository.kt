@@ -7,5 +7,7 @@ interface UserCategoryPreferenceRepository : JpaRepository<UserCategoryPreferenc
     fun deleteAllByUserId(userId: Long)
     fun deleteByUserIdAndCategoryIdIn(userId: Long, categoryIds: Set<Long>)
     fun findAllByUserId(userId: Long): List<UserCategoryPreference>
-
+    fun existsAllByIds(ids: Set<Long>): Boolean {
+        return ids.all { existsById(it) }
+    }
 }
