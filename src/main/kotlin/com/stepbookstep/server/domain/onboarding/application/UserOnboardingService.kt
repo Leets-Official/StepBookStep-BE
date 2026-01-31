@@ -3,6 +3,7 @@ package com.stepbookstep.server.domain.onboarding.application
 import com.stepbookstep.server.domain.onboarding.application.dto.NicknameCheckResponse
 import com.stepbookstep.server.domain.onboarding.application.dto.OnboardingSaveRequest
 import com.stepbookstep.server.domain.onboarding.application.dto.OnboardingSaveResponse
+import com.stepbookstep.server.domain.onboarding.application.dto.RoutineTokens
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreference
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreferenceRepository
 import com.stepbookstep.server.domain.user.domain.UserGenrePreference
@@ -45,45 +46,67 @@ class UserOnboardingService(
         val user = userRepository.findById(userId)
             .orElseThrow { CustomException(ErrorCode.USER_NOT_FOUND) }
 
+        val nickname = request.nickname.trim()
         validateNickname(request.nickname)
 
         if (userRepository.existsByNicknameAndIdNot(request.nickname, userId)) {
             throw CustomException(ErrorCode.DUPLICATED_NICKNAME)
         }
 
-        user.nickname = request.nickname
-        user.isOnboarded = true
+        validatePreferencesLimit(request)
 
         userCategoryPreferenceRepository.deleteAllByUserId(userId)
         userGenrePreferenceRepository.deleteAllByUserId(userId)
 
-        val categoryInserts = request.categoryIds.distinct().map { cid ->
-            UserCategoryPreference(userId = userId, categoryId = cid)
+        val categoryIds = request.categoryIds.distinct()
+        val genreIds = request.genreIds.distinct()
+
+        if (categoryIds.isNotEmpty()) {
+            userCategoryPreferenceRepository.saveAll(
+                categoryIds.map { cid ->
+                    UserCategoryPreference(userId = userId, categoryId = cid)
+                }
+            )
         }
-        userCategoryPreferenceRepository.saveAll(categoryInserts)
 
-        val genreInserts = request.genreIds.distinct().map { gid ->
-            UserGenrePreference(userId = userId, genreId = gid)
+        if (genreIds.isNotEmpty()) {
+            userGenrePreferenceRepository.saveAll(
+                genreIds.map { gid ->
+                    UserGenrePreference(userId = userId, genreId = gid)
+                }
+            )
         }
-        userGenrePreferenceRepository.saveAll(genreInserts)
 
-        val result = ruleEngine.calculate(request.levelAnswers)
+        val preferenceCount = categoryIds.size + genreIds.size
 
-        user.applyOnboardingResult(
-            nickname = request.nickname,
-            level = result.level,
-            routineType = result.routineType
+        val tokens = ruleEngine.createTokens(
+            answers = request.levelAnswers,
+            preferenceCount = preferenceCount
         )
+
+        user.completeOnboarding(nickname)
+        user.level = if (preferenceCount == 0) 1 else 2
 
         return OnboardingSaveResponse(
             isOnboarded = true,
-            level = result.level,
-            routineType = result.routineType
+            level = user.level,
+            routineTokens = RoutineTokens(
+                period = tokens.periodToken,
+                amount = tokens.amountToken,
+                basis = tokens.basisToken
+            )
         )
     }
 
     private fun validateNickname(nickname: String) {
         if (!nicknameRegex.matches(nickname)) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+    }
+
+    private fun validatePreferencesLimit(request: OnboardingSaveRequest) {
+        val total = request.categoryIds.distinct().size + request.genreIds.distinct().size
+        if (total > 3) {
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
     }

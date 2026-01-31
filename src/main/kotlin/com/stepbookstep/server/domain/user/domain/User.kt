@@ -48,14 +48,8 @@ class User(
     @Column(name = "is_onboarded", nullable = false)
     var isOnboarded: Boolean = false,
 ) {
-    fun applyOnboardingResult(
-        nickname: String,
-        level: Int,
-        routineType: RoutineType
-    ) {
+    fun completeOnboarding(nickname: String) {
         this.nickname = nickname
-        this.level = level
-        this.routineType = routineType
         this.isOnboarded = true
         this.updatedAt = OffsetDateTime.now()
     }
