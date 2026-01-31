@@ -11,26 +11,45 @@ import org.springframework.stereotype.Component
 @Component
 class OnboardingRuleEngine {
 
-    data class Result(
-        val level: Int,
-        val routineType: RoutineType
+    data class Tokens(
+        val periodToken: String,
+        val amountToken: String,
+        val basisToken: String
     )
 
-    fun calculate(a: LevelAnswers): Result {
-        // TODO: 규칙 확정되면 정교화 (현재는 임시로 고정값을 반환합니다.)
-        val level = when (a.readingFrequency) {
-            ReadingFrequencyAnswer.FINISHED_RECENTLY -> 3
-            ReadingFrequencyAnswer.STOP_MIDWAY -> 2
+    fun createTokens(
+        answers: LevelAnswers,
+        preferenceCount: Int,
+    ): Tokens {
+
+        val periodToken = when (answers.readingFrequency) {
+            ReadingFrequencyAnswer.FINISHED_RECENTLY,
+            ReadingFrequencyAnswer.STOP_MIDWAY -> "하루"
+
             ReadingFrequencyAnswer.LONG_TIME_NO_BOOK,
-            ReadingFrequencyAnswer.DONT_KNOW_START -> 1
+            ReadingFrequencyAnswer.DONT_KNOW_START -> "일주일"
         }
 
-        val routineType = when (level) {
-            3 -> RoutineType.HARD
-            2 -> RoutineType.NORMAL
-            else -> RoutineType.LIGHT
+        val amountToken = when (answers.readingDuration) {
+            ReadingDurationAnswer.SHORT_CHUNKS,
+            ReadingDurationAnswer.IT_DEPENDS -> "10분"
+            ReadingDurationAnswer.ONE_CHAPTER -> "20쪽"
+            ReadingDurationAnswer.READ_LONG_TIME -> "20분"
         }
 
-        return Result(level, routineType)
+        var basisToken = when (answers.difficultyPreference) {
+            DifficultyPreferenceAnswer.THICK_OR_HARD_BOOK,
+            DifficultyPreferenceAnswer.HARD_TO_UNDERSTAND -> "얇은 책"
+
+            DifficultyPreferenceAnswer.PRESSURE_TO_FINISH,
+            DifficultyPreferenceAnswer.NO_BURDEN -> "레벨 별 추천도서"
+        }
+
+        // 선호 분류 0개면 무조건 레벨 추천
+        if (preferenceCount == 0) {
+            basisToken = "레벨 별 추천도서"
+        }
+
+        return Tokens(periodToken, amountToken, basisToken)
     }
 }
