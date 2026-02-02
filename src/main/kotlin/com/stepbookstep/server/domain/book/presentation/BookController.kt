@@ -91,10 +91,9 @@ class BookController(
         @Parameter(description = "국가별 분류") @RequestParam(required = false) origin: String?,
         @Parameter(description = "장르별 분류") @RequestParam(required = false) genre: String?,
         @Parameter(description = "검색어 (제목, 저자, 출판사)") @RequestParam(required = false) keyword: String?,
-        @Parameter(description = "마지막으로 조회한 bookId (첫 요청 시 생략)") @RequestParam(required = false) cursor: Long?,
-        @Parameter(description = "조회할 개수") @RequestParam(defaultValue = "20") size: Int
+        @Parameter(description = "마지막으로 조회한 bookId (첫 요청 시 생략)") @RequestParam(required = false) cursor: Long?
     ): ResponseEntity<ApiResponse<BookFilterResponse>> {
-        val response = bookQueryService.filter(level, pageRange, origin, genre, keyword, cursor, size)
+        val response = bookQueryService.filter(level, pageRange, origin, genre, keyword, cursor)
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 }
