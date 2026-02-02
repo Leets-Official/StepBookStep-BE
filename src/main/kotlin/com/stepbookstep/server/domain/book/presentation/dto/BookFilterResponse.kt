@@ -3,12 +3,14 @@ package com.stepbookstep.server.domain.book.presentation.dto
 import com.stepbookstep.server.domain.book.domain.Book
 
 data class BookFilterResponse(
-    val books: List<BookFilterItem>
+    val books: List<BookFilterItem>,
+    val hasNext: Boolean
 ) {
     companion object {
-        fun of(books: List<Book>): BookFilterResponse {
+        fun of(books: List<Book>, hasNext: Boolean): BookFilterResponse {
             return BookFilterResponse(
-                books = books.map { BookFilterItem.from(it) }
+                books = books.map { BookFilterItem.from(it) },
+                hasNext = hasNext
             )
         }
     }

@@ -63,16 +63,24 @@ class BookController(
     @Operation(
         summary = "도서 필터 검색",
         description = """
-            선택한 필터 조건에 맞는 도서 목록을 조회합니다. (최대 20권씩 페이징)
+            선택한 필터 조건에 맞는 도서 목록을 조회합니다.
 
             ## 필터 옵션
             - **level**: 난이도 (1, 2, 3)
             - **pageRange**: 분량 (~200, 201~250, 251~350, 351~500, 501~650, 651~) - 중복 선택 가능
             - **origin**: 국가별 (한국소설, 영미소설, 중국소설, 일본소설, 프랑스소설, 독일소설)
             - **genre**: 장르별 (로맨스, 희곡, 무협소설, 판타지/환상문학, 역사소설, 라이트노벨, 추리/미스터리, 과학소설(SF), 액션/스릴러, 호러/공포소설)
+            - **keyword**: 검색어 (제목, 저자, 출판사에서 검색) - 필터 선택 후 사용 가능
+
+            ## 페이지네이션 
+            - **cursor**: 마지막으로 조회한 bookId (첫 요청 시 생략)
+            - **size**: 조회할 개수 (고정값 20)
+            - **hasNext**: 다음 페이지 존재 여부
+            - 정렬: id 오름차순
 
             모든 필터는 선택 사항이며, 복수 필터 적용 시 AND 조건으로 검색됩니다.
             pageRange는 중복 선택 시 OR 조건으로 검색됩니다.
+            keyword 입력 시 필터링된 결과 내에서 추가로 검색됩니다.
             유효하지 않은 필터 값을 입력하면 400 Bad Request 에러가 반환됩니다.
         """
     )
@@ -81,9 +89,11 @@ class BookController(
         @Parameter(description = "난이도") @RequestParam(required = false) level: Int?,
         @Parameter(description = "분량 (중복 선택 가능)") @RequestParam(required = false) pageRange: List<String>?,
         @Parameter(description = "국가별 분류") @RequestParam(required = false) origin: String?,
-        @Parameter(description = "장르별 분류") @RequestParam(required = false) genre: String?
+        @Parameter(description = "장르별 분류") @RequestParam(required = false) genre: String?,
+        @Parameter(description = "검색어 (제목, 저자, 출판사)") @RequestParam(required = false) keyword: String?,
+        @Parameter(description = "마지막으로 조회한 bookId (첫 요청 시 생략)") @RequestParam(required = false) cursor: Long?
     ): ResponseEntity<ApiResponse<BookFilterResponse>> {
-        val response = bookQueryService.filter(level, pageRange, origin, genre)
+        val response = bookQueryService.filter(level, pageRange, origin, genre, keyword, cursor)
         return ResponseEntity.ok(ApiResponse.ok(response))
     }
 }

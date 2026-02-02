@@ -112,6 +112,8 @@ enum class ErrorCode(
     INVALID_ORIGIN(2005, HttpStatus.BAD_REQUEST, "유효하지 않은 국가입니다."),
     INVALID_GENRE(2006, HttpStatus.BAD_REQUEST, "유효하지 않은 장르입니다."),
     USER_BOOK_NOT_FOUND(2007, HttpStatus.NOT_FOUND,"서재에 해당 도서가 존재하지 않습니다."),
+    FILTER_REQUIRED(2008, HttpStatus.BAD_REQUEST, "필터를 하나 이상 선택해주세요."),
+    NO_MORE_BOOKS(2009, HttpStatus.BAD_REQUEST, "마지막 페이지입니다."),
 
     // ========================
     // 3000~3999 : 루틴 관련 에러

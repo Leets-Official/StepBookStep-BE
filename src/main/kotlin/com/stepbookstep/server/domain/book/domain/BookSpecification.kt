@@ -79,4 +79,44 @@ object BookSpecification {
             }
         }
     }
+
+    /**
+     * 키워드 검색 필터 (제목, 저자, 출판사)
+     * 공백으로 구분된 각 키워드가 title/author/publisher 중 하나에 포함되면 검색됨
+     */
+    fun withKeyword(keyword: String?): Specification<Book> {
+        return Specification { root, _, cb ->
+            if (keyword.isNullOrBlank()) {
+                null
+            } else {
+                val keywords = keyword.trim().split("\\s+".toRegex()).filter { it.isNotBlank() }
+                if (keywords.isEmpty()) {
+                    null
+                } else {
+                    val keywordPredicates = keywords.map { word ->
+                        val pattern = "%$word%"
+                        cb.or(
+                            cb.like(root.get("title"), pattern),
+                            cb.like(root.get("author"), pattern),
+                            cb.like(root.get("publisher"), pattern)
+                        )
+                    }
+                    cb.and(*keywordPredicates.toTypedArray())
+                }
+            }
+        }
+    }
+
+    /**
+     * 커서 기반 페이지네이션 (id > cursor)
+     */
+    fun withCursor(cursor: Long?): Specification<Book> {
+        return Specification { root, _, cb ->
+            if (cursor == null) {
+                null
+            } else {
+                cb.greaterThan(root.get("id"), cursor)
+            }
+        }
+    }
 }

@@ -75,8 +75,16 @@ class BookQueryService(
         level: Int?,
         pageRanges: List<String>?,
         origin: String?,
-        genre: String?
+        genre: String?,
+        keyword: String?,
+        cursor: Long?
     ): BookFilterResponse {
+        // 필터 없이 검색어만 입력한 경우 예외 처리
+        val hasFilter = level != null || !pageRanges.isNullOrEmpty() || origin != null || genre != null
+        if (!hasFilter && !keyword.isNullOrBlank()) {
+            throw CustomException(ErrorCode.FILTER_REQUIRED, null)
+        }
+
         // 유효성 검증
         validateFilterParams(level, pageRanges, origin, genre)
 
@@ -84,12 +92,19 @@ class BookQueryService(
             .and(BookSpecification.withPageRange(pageRanges))
             .and(BookSpecification.withOrigin(origin))
             .and(BookSpecification.withGenre(genre))
+            .and(BookSpecification.withKeyword(keyword))
+            .and(BookSpecification.withCursor(cursor))
 
-        val pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val result = bookRepository.findAll(spec, pageable)
+        // PAGE_SIZE + 1개 조회하여 다음 페이지 존재 여부 확인
+        val pageable = PageRequest.of(0, PAGE_SIZE + 1, Sort.by(Sort.Direction.ASC, "id"))
+        val result = bookRepository.findAll(spec, pageable).content
+
+        val hasNext = result.size > PAGE_SIZE
+        val books = if (hasNext) result.dropLast(1) else result
 
         return BookFilterResponse.of(
-            books = result.content
+            books = books,
+            hasNext = hasNext
         )
     }
 
