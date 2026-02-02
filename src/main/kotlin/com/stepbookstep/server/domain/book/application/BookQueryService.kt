@@ -99,11 +99,6 @@ class BookQueryService(
         val pageable = PageRequest.of(0, size + 1, Sort.by(Sort.Direction.ASC, "id"))
         val result = bookRepository.findAll(spec, pageable).content
 
-        // cursor가 있는데 결과가 비어있으면 마지막 페이지 이후 요청
-        if (cursor != null && result.isEmpty()) {
-            throw CustomException(ErrorCode.NO_MORE_BOOKS, null)
-        }
-
         val hasNext = result.size > size
         val books = if (hasNext) result.dropLast(1) else result
 
