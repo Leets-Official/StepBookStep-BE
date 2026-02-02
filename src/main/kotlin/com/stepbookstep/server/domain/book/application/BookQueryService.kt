@@ -24,7 +24,6 @@ class BookQueryService(
 
     companion object {
         private val logger = LoggerFactory.getLogger(BookQueryService::class.java)
-        private const val PAGE_SIZE = 20
         private val VALID_LEVELS = setOf(1, 2, 3)
         private val VALID_PAGE_RANGES = setOf("~200", "201~250", "251~350", "351~500", "501~650", "651~")
         private val VALID_ORIGINS = setOf("한국소설", "영미소설", "중국소설", "일본소설", "프랑스소설", "독일소설")
@@ -75,8 +74,17 @@ class BookQueryService(
         level: Int?,
         pageRanges: List<String>?,
         origin: String?,
-        genre: String?
+        genre: String?,
+        keyword: String?,
+        cursor: Long?,
+        size: Int
     ): BookFilterResponse {
+        // 필터 없이 검색어만 입력한 경우 예외 처리
+        val hasFilter = level != null || !pageRanges.isNullOrEmpty() || origin != null || genre != null
+        if (!hasFilter && !keyword.isNullOrBlank()) {
+            throw CustomException(ErrorCode.FILTER_REQUIRED, null)
+        }
+
         // 유효성 검증
         validateFilterParams(level, pageRanges, origin, genre)
 
@@ -84,12 +92,24 @@ class BookQueryService(
             .and(BookSpecification.withPageRange(pageRanges))
             .and(BookSpecification.withOrigin(origin))
             .and(BookSpecification.withGenre(genre))
+            .and(BookSpecification.withKeyword(keyword))
+            .and(BookSpecification.withCursor(cursor))
 
-        val pageable = PageRequest.of(0, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"))
-        val result = bookRepository.findAll(spec, pageable)
+        // size + 1개 조회하여 다음 페이지 존재 여부 확인
+        val pageable = PageRequest.of(0, size + 1, Sort.by(Sort.Direction.ASC, "id"))
+        val result = bookRepository.findAll(spec, pageable).content
+
+        // cursor가 있는데 결과가 비어있으면 마지막 페이지 이후 요청
+        if (cursor != null && result.isEmpty()) {
+            throw CustomException(ErrorCode.NO_MORE_BOOKS, null)
+        }
+
+        val hasNext = result.size > size
+        val books = if (hasNext) result.dropLast(1) else result
 
         return BookFilterResponse.of(
-            books = result.content
+            books = books,
+            hasNext = hasNext
         )
     }
 
