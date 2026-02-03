@@ -34,7 +34,10 @@ data class BookFilterItem(
             when {
                 book.itemPage <= 200 -> tags.add("~200")
                 book.itemPage <= 250 -> tags.add("201~250")
-                else -> tags.add("251~")
+                book.itemPage <= 350 -> tags.add("251~350")
+                book.itemPage <= 500 -> tags.add("351~500")
+                book.itemPage <= 650 -> tags.add("501~650")
+                else -> tags.add("651~")
             }
 
             // 국가 태그
