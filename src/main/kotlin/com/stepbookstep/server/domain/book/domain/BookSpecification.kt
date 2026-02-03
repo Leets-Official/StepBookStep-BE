@@ -18,38 +18,28 @@ object BookSpecification {
     }
 
     /**
-     * 분량 필터 (~200, 201~250, 251~350, 351~500, 501~650, 651~)
-     * 중복 선택 가능 (OR 조건)
+     * 분량 필터 (단일 선택, 선택한 값 이하 모두 포함)
+     * ~200 → itemPage <= 200
+     * 250 → itemPage <= 250
+     * 350 → itemPage <= 350
+     * 500 → itemPage <= 500
+     * 650 → itemPage <= 650
+     * 651~ → 분량 제한 없음 (전체)
      */
-    fun withPageRange(pageRanges: List<String>?): Specification<Book> {
+    fun withPageRange(pageRange: String?): Specification<Book> {
         return Specification { root, _, cb ->
-            if (pageRanges.isNullOrEmpty()) {
+            if (pageRange.isNullOrBlank()) {
                 null
             } else {
-                val predicates = pageRanges.mapNotNull { pageRange ->
-                    when (pageRange) {
-                        "~200" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 200)
-                        "201~250" -> cb.and(
-                            cb.greaterThan(root.get<Int>("itemPage"), 200),
-                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 250)
-                        )
-                        "251~350" -> cb.and(
-                            cb.greaterThan(root.get<Int>("itemPage"), 250),
-                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 350)
-                        )
-                        "351~500" -> cb.and(
-                            cb.greaterThan(root.get<Int>("itemPage"), 350),
-                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 500)
-                        )
-                        "501~650" -> cb.and(
-                            cb.greaterThan(root.get<Int>("itemPage"), 500),
-                            cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 650)
-                        )
-                        "651~" -> cb.greaterThan(root.get<Int>("itemPage"), 650)
-                        else -> null
-                    }
+                when (pageRange) {
+                    "~200" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 200)
+                    "250" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 250)
+                    "350" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 350)
+                    "500" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 500)
+                    "650" -> cb.lessThanOrEqualTo(root.get<Int>("itemPage"), 650)
+                    "651~" -> null // 전체 분량
+                    else -> null
                 }
-                if (predicates.isEmpty()) null else cb.or(*predicates.toTypedArray())
             }
         }
     }
