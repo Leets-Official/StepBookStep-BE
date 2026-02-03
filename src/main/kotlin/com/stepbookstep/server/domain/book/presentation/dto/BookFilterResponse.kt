@@ -32,11 +32,11 @@ data class BookFilterItem(
 
             // 분량 태그
             when {
-                book.itemPage <= 200 -> tags.add("~200")
-                book.itemPage <= 250 -> tags.add("201~250")
-                book.itemPage <= 350 -> tags.add("251~350")
-                book.itemPage <= 500 -> tags.add("351~500")
-                book.itemPage <= 650 -> tags.add("501~650")
+                book.itemPage <= 200 -> tags.add("~200쪽")
+                book.itemPage <= 250 -> tags.add("201~250쪽")
+                book.itemPage <= 350 -> tags.add("251~350쪽")
+                book.itemPage <= 500 -> tags.add("351~500쪽")
+                book.itemPage <= 650 -> tags.add("501~650쪽")
                 else -> tags.add("651~")
             }
 
