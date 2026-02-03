@@ -26,7 +26,7 @@ class BookQueryService(
         private val logger = LoggerFactory.getLogger(BookQueryService::class.java)
         private const val PAGE_SIZE = 20
         private val VALID_LEVELS = setOf(1, 2, 3)
-        private val VALID_PAGE_RANGES = setOf("~200", "201~250", "251~350", "351~500", "501~650", "651~")
+        private val VALID_PAGE_RANGES = setOf("~200", "250", "350", "500", "650", "651~")
         private val VALID_ORIGINS = setOf("한국소설", "영미소설", "중국소설", "일본소설", "프랑스소설", "독일소설")
         private val VALID_GENRES = setOf(
             "로맨스", "희곡", "무협소설", "판타지/환상문학", "역사소설",
@@ -73,23 +73,23 @@ class BookQueryService(
 
     fun filter(
         level: Int?,
-        pageRanges: List<String>?,
+        pageRange: String?,
         origin: String?,
         genre: String?,
         keyword: String?,
         cursor: Long?
     ): BookFilterResponse {
         // 필터 없이 검색어만 입력한 경우 예외 처리
-        val hasFilter = level != null || !pageRanges.isNullOrEmpty() || origin != null || genre != null
+        val hasFilter = level != null || pageRange != null || origin != null || genre != null
         if (!hasFilter && !keyword.isNullOrBlank()) {
             throw CustomException(ErrorCode.FILTER_REQUIRED, null)
         }
 
         // 유효성 검증
-        validateFilterParams(level, pageRanges, origin, genre)
+        validateFilterParams(level, pageRange, origin, genre)
 
         val spec = Specification.where(BookSpecification.withLevel(level))
-            .and(BookSpecification.withPageRange(pageRanges))
+            .and(BookSpecification.withPageRange(pageRange))
             .and(BookSpecification.withOrigin(origin))
             .and(BookSpecification.withGenre(genre))
             .and(BookSpecification.withKeyword(keyword))
@@ -110,14 +110,14 @@ class BookQueryService(
 
     private fun validateFilterParams(
         level: Int?,
-        pageRanges: List<String>?,
+        pageRange: String?,
         origin: String?,
         genre: String?
     ) {
         if (level != null && level !in VALID_LEVELS) {
             throw CustomException(ErrorCode.INVALID_DIFFICULTY, null)
         }
-        if (!pageRanges.isNullOrEmpty() && pageRanges.any { it !in VALID_PAGE_RANGES }) {
+        if (pageRange != null && pageRange !in VALID_PAGE_RANGES) {
             throw CustomException(ErrorCode.INVALID_PAGE_RANGE, null)
         }
         if (origin != null && origin !in VALID_ORIGINS) {
