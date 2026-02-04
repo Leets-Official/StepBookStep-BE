@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.OffsetDateTime
-import kotlin.jvm.optionals.getOrNull
 
 @Service
 class ReadingGoalService(
@@ -182,17 +181,14 @@ class ReadingGoalService(
 
         val bookIds = activeGoals.map { it.bookId }
 
-        // 1. 필요한 데이터를 한 번에 배치 조회
         val booksMap = bookRepository.findAllByIdIn(bookIds).associateBy { it.id }
         val userBooksMap = userBookRepository.findAllByUserIdAndBookIdIn(userId, bookIds)
             .associateBy { it.bookId }
 
-        // 2. 가장 이른 목표 생성일 기준으로 모든 로그를 한 번에 조회
         val earliestGoalDate = activeGoals.minOfOrNull { it.createdAt.toLocalDate() } ?: LocalDate.now()
         val allLogs = readingLogRepository.findAllByBooksInDateRange(userId, bookIds, earliestGoalDate)
         val logsByBookId = allLogs.groupBy { it.bookId }
 
-        // 3. 메모리에서 데이터 조합 (DB 조회 없음)
         return activeGoals.mapNotNull { goal ->
             val book = booksMap[goal.bookId] ?: return@mapNotNull null
             val userBook = userBooksMap[goal.bookId] ?: return@mapNotNull null
@@ -222,7 +218,7 @@ class ReadingGoalService(
     }
 
     /**
-     * 로그 리스트에서 현재 진행률 계산 (배치 처리용)
+     * 로그 리스트에서 현재 진행률 계산
      */
     private fun calculateCurrentProgressFromLogs(logs: List<ReadingLog>, totalPages: Int): Int {
         val latestLog = logs
@@ -238,7 +234,7 @@ class ReadingGoalService(
     }
 
     /**
-     * 로그 리스트에서 달성량 계산 (배치 처리용)
+     * 로그 리스트에서 달성량 계산
      */
     private fun calculateAchievedAmountFromLogs(
         logs: List<ReadingLog>,
