@@ -172,7 +172,7 @@ class ReadingGoalService(
     /**
      * 사용자의 모든 활성 목표 조회 (루틴 목록)
      * 최근 생성순으로 정렬
-     * ✅ N+1 문제 해결: 배치 조회 후 메모리에서 조합
+     * 배치 조회 후 메모리에서 조합
      */
     @Transactional(readOnly = true)
     fun getAllActiveRoutines(userId: Long): List<RoutineWithDetails> {
