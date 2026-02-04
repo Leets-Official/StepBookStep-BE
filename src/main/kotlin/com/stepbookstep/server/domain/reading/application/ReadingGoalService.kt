@@ -6,6 +6,7 @@ import com.stepbookstep.server.domain.reading.domain.GoalMetric
 import com.stepbookstep.server.domain.reading.domain.GoalPeriod
 import com.stepbookstep.server.domain.reading.domain.ReadingGoal
 import com.stepbookstep.server.domain.reading.domain.ReadingGoalRepository
+import com.stepbookstep.server.domain.reading.domain.ReadingLog
 import com.stepbookstep.server.domain.reading.domain.ReadingLogRepository
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
@@ -171,25 +172,35 @@ class ReadingGoalService(
     /**
      * 사용자의 모든 활성 목표 조회 (루틴 목록)
      * 최근 생성순으로 정렬
+     * ✅ N+1 문제 해결: 배치 조회 후 메모리에서 조합
      */
     @Transactional(readOnly = true)
     fun getAllActiveRoutines(userId: Long): List<RoutineWithDetails> {
         val activeGoals = readingGoalRepository.findAllByUserIdAndActiveTrueOrderByCreatedAtDesc(userId)
 
+        if (activeGoals.isEmpty()) return emptyList()
+
+        val bookIds = activeGoals.map { it.bookId }
+
+        // 1. 필요한 데이터를 한 번에 배치 조회
+        val booksMap = bookRepository.findAllByIdIn(bookIds).associateBy { it.id }
+        val userBooksMap = userBookRepository.findAllByUserIdAndBookIdIn(userId, bookIds)
+            .associateBy { it.bookId }
+
+        // 2. 가장 이른 목표 생성일 기준으로 모든 로그를 한 번에 조회
+        val earliestGoalDate = activeGoals.minOfOrNull { it.createdAt.toLocalDate() } ?: LocalDate.now()
+        val allLogs = readingLogRepository.findAllByBooksInDateRange(userId, bookIds, earliestGoalDate)
+        val logsByBookId = allLogs.groupBy { it.bookId }
+
+        // 3. 메모리에서 데이터 조합 (DB 조회 없음)
         return activeGoals.mapNotNull { goal ->
-            val book = bookRepository.findById(goal.bookId).getOrNull() ?: return@mapNotNull null
-            val userBook = userBookRepository.findByUserIdAndBookId(userId, goal.bookId) ?: return@mapNotNull null
+            val book = booksMap[goal.bookId] ?: return@mapNotNull null
+            val userBook = userBooksMap[goal.bookId] ?: return@mapNotNull null
+            val bookLogs = logsByBookId[goal.bookId] ?: emptyList()
 
-            val currentProgress = calculateCurrentProgress(
-                userId = userId,
-                bookId = goal.bookId,
-                totalPages = book.itemPage
-            )
-
-            // 현재 기간에 달성한 양 계산
-            val achievedAmount = calculateAchievedAmount(
-                userId = userId,
-                bookId = goal.bookId,
+            val currentProgress = calculateCurrentProgressFromLogs(bookLogs, book.itemPage)
+            val achievedAmount = calculateAchievedAmountFromLogs(
+                logs = bookLogs,
                 period = goal.period,
                 metric = goal.metric,
                 goalCreatedAt = goal.createdAt
@@ -211,7 +222,62 @@ class ReadingGoalService(
     }
 
     /**
-     * 현재 기간에 달성한 양 계산
+     * 로그 리스트에서 현재 진행률 계산 (배치 처리용)
+     */
+    private fun calculateCurrentProgressFromLogs(logs: List<ReadingLog>, totalPages: Int): Int {
+        val latestLog = logs
+            .filter { it.readQuantity != null }
+            .sortedWith(compareByDescending<ReadingLog> { it.recordDate }.thenByDescending { it.createdAt })
+            .firstOrNull()
+
+        val currentPage = latestLog?.readQuantity ?: 0
+
+        return if (totalPages > 0) {
+            ((currentPage.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+        } else 0
+    }
+
+    /**
+     * 로그 리스트에서 달성량 계산 (배치 처리용)
+     */
+    private fun calculateAchievedAmountFromLogs(
+        logs: List<ReadingLog>,
+        period: GoalPeriod,
+        metric: GoalMetric,
+        goalCreatedAt: OffsetDateTime
+    ): Int {
+        val (startDate, endDate) = getPeriodDateRange(period, goalCreatedAt)
+
+        return when (metric) {
+            GoalMetric.PAGE -> {
+                // baseline: 기간 시작 전 마지막 기록
+                val baselineRecord = logs
+                    .filter { it.recordDate < startDate && it.readQuantity != null }
+                    .sortedWith(compareByDescending<ReadingLog> { it.recordDate }.thenByDescending { it.createdAt })
+                    .firstOrNull()
+
+                // endValue: 기간 내 마지막 기록
+                val lastRecordInPeriod = logs
+                    .filter { it.recordDate in startDate..endDate && it.readQuantity != null }
+                    .sortedWith(compareByDescending<ReadingLog> { it.recordDate }.thenByDescending { it.createdAt })
+                    .firstOrNull()
+
+                val baseline = baselineRecord?.readQuantity ?: 0
+                val endValue = lastRecordInPeriod?.readQuantity ?: return 0
+
+                (endValue - baseline).coerceAtLeast(0)
+            }
+
+            GoalMetric.TIME -> {
+                logs
+                    .filter { it.recordDate in startDate..endDate && it.durationSeconds != null }
+                    .sumOf { it.durationSeconds ?: 0 } / 60
+            }
+        }
+    }
+
+    /**
+     * 현재 기간에 달성한 양 계산 (단일 책 조회용)
      * - PAGE: baseline(기간 시작 전)과 마지막 기록 차이
      * - TIME: 기간 내 총 독서 시간 합계
      */
@@ -259,9 +325,8 @@ class ReadingGoalService(
         }
     }
 
-
     /**
-     * 현재 진행률 계산 (책 전체 대비 읽은 비율 0-100)
+     * 현재 진행률 계산 (단일 책 조회용 - 책 전체 대비 읽은 비율 0-100)
      */
     private fun calculateCurrentProgress(
         userId: Long,
@@ -275,7 +340,6 @@ class ReadingGoalService(
             ((currentPage.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
         } else 0
     }
-
 
     /**
      * 기간에 따른 날짜 범위 계산
