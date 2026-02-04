@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param
 interface BookRepository : JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
 
     fun findAllByLevel(level: Int): List<Book>
+    fun findAllByIdIn(ids: List<Long>):List<Book>
 
     @Query("""
         SELECT b FROM Book b
