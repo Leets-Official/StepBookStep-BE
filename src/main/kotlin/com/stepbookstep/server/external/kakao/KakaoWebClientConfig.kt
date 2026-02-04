@@ -17,4 +17,11 @@ class KakaoWebClientConfig {
             .baseUrl("https://kapi.kakao.com")
             .build()
     }
+
+    @Bean
+    fun kakaoAuthWebClient(): WebClient {
+        return WebClient.builder()
+            .baseUrl("https://kauth.kakao.com")
+            .build()
+    }
 }

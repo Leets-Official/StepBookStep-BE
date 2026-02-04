@@ -9,6 +9,7 @@ import com.stepbookstep.server.external.kakao.KakaoUserMeResponse
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import com.stepbookstep.server.security.jwt.JwtProvider
+import com.stepbookstep.server.security.jwt.KakaoProperties
 import com.stepbookstep.server.security.jwt.TokenType
 import com.stepbookstep.server.security.token.RefreshTokenService
 import org.springframework.stereotype.Service
@@ -23,6 +24,7 @@ class AuthService(
     private val userService: UserService,
     private val jwtProvider: JwtProvider,
     private val refreshTokenService: RefreshTokenService,
+    private val kakaoProperties: KakaoProperties,
 ) {
 
     /**
@@ -47,6 +49,39 @@ class AuthService(
         val refreshToken = jwtProvider.createToken(user.id, TokenType.REFRESH)
 
         // 4) Refresh Token 저장 (DB Transaction - RefreshTokenService 내부에서 처리)
+        refreshTokenService.save(userId = user.id, refreshToken = refreshToken)
+
+        return KakaoLoginResponse(
+            accessToken = accessToken,
+            refreshToken = refreshToken,
+            isNewUser = isNewUser,
+            nickname = user.nickname
+        )
+    }
+
+    fun kakaoLoginWithCode(code: String): KakaoLoginResponse {
+        if (code.isBlank()) {
+            throw CustomException(ErrorCode.INVALID_INPUT)
+        }
+
+        // 1) 인가 코드 → 카카오 Access Token 교환
+        val tokenResponse = kakaoApiClient.getToken(
+            code = code,
+            redirectUri = kakaoProperties.redirectUri
+        )
+
+        val kakaoAccessToken = tokenResponse.accessToken
+
+        // 2) 아래는 기존 로직 재사용
+        val kakaoMe = kakaoApiClient.getMe(kakaoAccessToken)
+        val providerUserId = kakaoMe.id.toString()
+        val nicknameFromKakao = kakaoMe.nickname ?: "사용자"
+
+        val (user, isNewUser) = userService.getOrCreateKakaoUser(providerUserId, nicknameFromKakao)
+
+        val accessToken = jwtProvider.createToken(user.id, TokenType.ACCESS)
+        val refreshToken = jwtProvider.createToken(user.id, TokenType.REFRESH)
+
         refreshTokenService.save(userId = user.id, refreshToken = refreshToken)
 
         return KakaoLoginResponse(
