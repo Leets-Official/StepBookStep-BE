@@ -11,9 +11,11 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Auth", description = "인증/인가 기능을 제공하는 API")
@@ -38,6 +40,13 @@ class AuthController(
     fun reissue(@Valid @RequestBody req: ReissueRequest): ResponseEntity<ApiResponse<RefreshTokenService.ReissueResult>> {
         val result = refreshTokenService.reissue(req.refreshToken)
         return ResponseEntity.ok(ApiResponse.Companion.ok(result))
+    }
+
+    @Operation(summary = "카카오 OAuth 콜백", description = "카카오 로그인 완료 후 인가 코드를 받아 JWT를 발급합니다.")
+    @GetMapping("/oauth/kakao/callback")
+    fun kakaoCallback(@RequestParam code: String): ResponseEntity<ApiResponse<KakaoLoginResponse>> {
+        val result = authService.kakaoLoginWithCode(code)
+        return ResponseEntity.ok(ApiResponse.ok(result))
     }
 
     @Operation(summary = "로그아웃", description = "클라이언트가 전달한 refreshToken을 서버에서 무효화(revoked)하여 더 이상 재발급에 사용할 수 없도록 처리합니다.")

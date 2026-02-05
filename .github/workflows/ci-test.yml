@@ -42,7 +42,10 @@ jobs:
                 expiration: 86400000
 
           kakao:
-            admin-key: "${{ secrets.KAKAO_ADMIN_KEY }}"
+            client-id: test
+            client-secret: test
+            redirect-uri: http://localhost
+            admin-key: test
           EOF
           cp src/main/resources/application.yml src/test/resources/application.yml
 
