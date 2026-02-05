@@ -2,10 +2,10 @@ package com.stepbookstep.server.domain.auth.application.dto
 
 data class KakaoUserMeResponse(
     val id: Long,
-    val kakao_account: KakaoAccount?
+    val kakaoAccount: KakaoAccount?
 ) {
     val nickname: String?
-        get() = kakao_account?.profile?.nickname
+        get() = kakaoAccount?.profile?.nickname
 }
 
 data class KakaoAccount(
