@@ -97,6 +97,16 @@ class ReadingLogService(
             )
         )
 
+        if (bookStatus == READING) {
+            userBook.totalPagesRead = readQuantity ?: userBook.totalPagesRead
+            val totalPages = book.itemPage ?: 0
+            userBook.progressPercent =
+                if (totalPages > 0 && userBook.totalPagesRead > 0) {
+                    ((userBook.totalPagesRead.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+                } else 0
+        }
+
+
         if (bookStatus == FINISHED || bookStatus == STOPPED) {
             deactivateActiveGoalIfExists(userId, bookId)
         }
