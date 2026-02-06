@@ -93,11 +93,13 @@ class StatisticsService(
         val totalMinutes = (totalSeconds / 60).toInt()
         val hours = (totalMinutes / 60)
         val minutes = (totalMinutes % 60)
+        val days=hours/24
 
         return CumulativeTimeDto(
             hours = hours,
             minutes = minutes,
-            totalMinutes = totalMinutes
+            totalMinutes = totalMinutes,
+            days=days,
         )
     }
 

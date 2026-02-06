@@ -39,7 +39,8 @@ data class MonthlyDataDto(
 data class CumulativeTimeDto(
     val hours: Int,
     val minutes: Int,
-    val totalMinutes: Int
+    val totalMinutes: Int,
+    val days: Int
 )
 
 /**
