@@ -302,10 +302,8 @@ class StatisticsService(
             categoryCountMap[category] = categoryCountMap.getOrDefault(category, 0) + 1
         }
 
-        // 내림차순 정렬 후 상위 3개만 선택
         val sortedCategories = categoryCountMap.entries
             .sortedByDescending { it.value }
-            .take(3)  // 상위 3개만
 
         val categories = sortedCategories.mapIndexed { index, entry ->
             CategoryDto(
