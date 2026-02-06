@@ -3,6 +3,7 @@ package com.stepbookstep.server.domain.reading.presentation
 import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.reading.application.ReadingGoalService
 import com.stepbookstep.server.domain.reading.application.ReadingLogService
+import com.stepbookstep.server.domain.reading.presentation.dto.BookReadingDetailResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogRequest
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.ReadingGoalResponse
@@ -164,5 +165,25 @@ class ReadingController(
         )
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.created(CreateReadingLogResponse(log.id)))
+    }
+
+    @Operation(
+        summary = "독서 상세 조회",
+        description = """
+            특정 책의 독서 상세 정보를 조회합니다.
+            - 도서 상태(읽는 중/완독/중지)와 목표 정보
+            - 현재 진도 (쪽수, 퍼센트)
+            - 시작일/종료일
+            - 각 독서 기록의 날짜, 쪽수(퍼센트), 시간
+            - 완독/중지 시 별점
+        """
+    )
+    @GetMapping("/books/{bookId}/reading-detail")
+    fun getBookReadingDetail(
+        @Parameter(description = "도서 ID") @PathVariable bookId: Long,
+        @Parameter(hidden = true) @LoginUserId userId: Long
+    ): ResponseEntity<ApiResponse<BookReadingDetailResponse>> {
+        val detail = readingLogService.getBookReadingDetail(userId, bookId)
+        return ResponseEntity.ok(ApiResponse.ok(detail))
     }
 }

@@ -10,6 +10,9 @@ import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus
 import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus.*
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
+import com.stepbookstep.server.domain.reading.presentation.dto.BookReadingDetailResponse
+import com.stepbookstep.server.domain.reading.presentation.dto.GoalInfo
+import com.stepbookstep.server.domain.reading.presentation.dto.ReadingLogItem
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.stereotype.Service
@@ -186,5 +189,60 @@ class ReadingLogService(
         READING -> ReadStatus.READING
         FINISHED -> ReadStatus.FINISHED
         STOPPED -> ReadStatus.STOPPED
+    }
+
+    /**
+     * 독서 상세 페이지 조회
+     * - 도서 상태, 목표, 진도, 시작일/종료일, 별점, 독서 기록 리스트
+     */
+    @Transactional(readOnly = true)
+    fun getBookReadingDetail(userId: Long, bookId: Long): BookReadingDetailResponse {
+        val book = bookRepository.findById(bookId)
+            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
+
+        val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
+            ?: throw CustomException(ErrorCode.USER_BOOK_NOT_FOUND)
+
+        val goal = readingGoalRepository.findTopByUserIdAndBookIdOrderByCreatedAtDesc(userId, bookId)
+        val goalMetric = goal?.metric
+
+        val allLogs = readingLogRepository.findAllByUserIdAndBookIdOrderByRecordDateAscCreatedAtAsc(userId, bookId)
+
+        val latestReadingLog = allLogs
+            .filter { it.bookStatus == READING && it.readQuantity != null }
+            .lastOrNull()
+
+        val currentPage = latestReadingLog?.readQuantity ?: 0
+        val totalPages = book.itemPage
+        val progressPercent = if (totalPages > 0) {
+            ((currentPage.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+        } else 0
+
+        val startDate = allLogs.firstOrNull()?.recordDate
+        val endDate = allLogs
+            .lastOrNull { it.bookStatus == FINISHED || it.bookStatus == STOPPED }
+            ?.recordDate
+
+        val rating = allLogs
+            .lastOrNull { (it.bookStatus == FINISHED || it.bookStatus == STOPPED) && it.rating != null }
+            ?.rating
+            ?: userBook.rating
+
+        // goalMetric에 따라 시간 포함 여부 결정
+        val readingLogItems = allLogs
+            .map { ReadingLogItem.from(it, totalPages, goalMetric) }
+            .reversed()
+
+        return BookReadingDetailResponse(
+            bookStatus = userBook.status,
+            goal = goal?.let { GoalInfo.from(it) },
+            currentPage = currentPage,
+            totalPages = totalPages,
+            progressPercent = progressPercent,
+            startDate = startDate,
+            endDate = endDate,
+            rating = rating,
+            readingLogs = readingLogItems
+        )
     }
 }
