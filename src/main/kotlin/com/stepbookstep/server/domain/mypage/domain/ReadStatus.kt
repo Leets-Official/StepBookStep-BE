@@ -22,6 +22,7 @@ enum class ReadStatus {
                 "READING" -> READING
                 "FINISHED" -> FINISHED
                 "STOPPED" -> STOPPED
+                "NOT_STARTED" -> NOT_STARTED
                 else -> throw CustomException(ErrorCode.INVALID_INPUT)
             }
         }

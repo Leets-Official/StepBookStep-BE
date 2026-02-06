@@ -27,7 +27,7 @@ class MyBookController(
         - READING: 읽는 중인 책
         - FINISHED: 완독한 책
         - PAUSED: 중단한 책
-        - BOOKMARKED: 읽고 싶은 책(북마크)
+        - NOT_STARTED: 읽기 전(북마크만 한 경우, 기본상태)
         
         기본 정렬: 최근 기록순(updatedAt DESC)
     """
@@ -38,7 +38,7 @@ class MyBookController(
             description = "서재 탭",
             example = "READING",
             schema = Schema(
-                allowableValues = ["READING", "FINISHED", "PAUSED", "BOOKMARKED"]
+                allowableValues = ["READING", "FINISHED", "PAUSED", "NOT_STARTED"]
             )
         )
         @RequestParam readStatus: String,
