@@ -93,11 +93,13 @@ class StatisticsService(
         val totalMinutes = (totalSeconds / 60).toInt()
         val hours = (totalMinutes / 60)
         val minutes = (totalMinutes % 60)
+        val days=hours/24
 
         return CumulativeTimeDto(
             hours = hours,
             minutes = minutes,
-            totalMinutes = totalMinutes
+            totalMinutes = totalMinutes,
+            days=days,
         )
     }
 
@@ -298,14 +300,12 @@ class StatisticsService(
         // 장르별 집계 (Book의 genre 필드 사용)
         val categoryCountMap = mutableMapOf<String, Int>()
         finishedBooks.forEach { userBook ->
-            val category = userBook.book.genre.ifBlank { "미분류" }
+            val category = userBook.book.origin.ifBlank { "미분류" }
             categoryCountMap[category] = categoryCountMap.getOrDefault(category, 0) + 1
         }
 
-        // 내림차순 정렬 후 상위 3개만 선택
         val sortedCategories = categoryCountMap.entries
             .sortedByDescending { it.value }
-            .take(3)  // 상위 3개만
 
         val categories = sortedCategories.mapIndexed { index, entry ->
             CategoryDto(
