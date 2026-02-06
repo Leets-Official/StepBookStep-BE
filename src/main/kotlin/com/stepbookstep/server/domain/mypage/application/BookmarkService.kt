@@ -25,14 +25,14 @@ class BookmarkService(
 
         val book = bookRepository.findById(bookId)
             .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
-    val existing = myPageUserBookRepository.findByUserIdAndBookId(userId, bookId)
+        val existing = myPageUserBookRepository.findByUserIdAndBookId(userId, bookId)
 
         if (existing == null) {
             myPageUserBookRepository.save(
                 UserBook(
                     userId = userId,
                     book = book,
-                    status = ReadStatus.STOPPED,
+                    status = ReadStatus.NOT_STARTED,
                     isBookmarked = true,
                     createdAt = OffsetDateTime.now(),
                     updatedAt = OffsetDateTime.now()

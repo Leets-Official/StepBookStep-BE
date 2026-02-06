@@ -34,6 +34,12 @@ class ReadingStatusService(
         }
 
         when (newStatus) {
+            ReadStatus.NOT_STARTED -> {
+                userBook.status = ReadStatus.NOT_STARTED
+                userBook.finishedAt = null
+                userBook.rating = null
+            }
+
             ReadStatus.READING -> {
                 userBook.status = ReadStatus.READING
                 // 재독서시, 데이터 보존
