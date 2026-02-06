@@ -168,9 +168,9 @@ class ReadingController(
     }
 
     @Operation(
-        summary = "독서 상세 조회",
+        summary = "독서 기록 상세 조회",
         description = """
-            특정 책의 독서 상세 정보를 조회합니다.
+            특정 책의 독서 기록 상세 정보를 조회합니다.
             - 도서 상태(읽는 중/완독/중지)와 목표 정보
             - 현재 진도 (쪽수, 퍼센트)
             - 시작일/종료일
