@@ -228,10 +228,25 @@ class ReadingLogService(
             ?.rating
             ?: userBook.rating
 
-        // goalMetric에 따라 시간 포함 여부 결정
-        val readingLogItems = allLogs
-            .map { ReadingLogItem.from(it, totalPages, goalMetric) }
-            .reversed()
+
+        val readingLogs = allLogs.filter { it.bookStatus == READING }
+
+        val readingLogItems = readingLogs.mapIndexed { index, log ->
+            val quantity = log.readQuantity
+            val prevQuantity = if (index > 0) readingLogs[index - 1].readQuantity ?: 0 else 0
+            val pagesRead = if (quantity != null) (quantity - prevQuantity).coerceAtLeast(0) else null
+
+            val percent = if (totalPages > 0 && quantity != null) {
+                ((quantity.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+            } else null
+
+            ReadingLogItem(
+                logId = log.id,
+                recordDate = log.recordDate,
+                pagesRead = pagesRead,
+                durationSeconds = log.durationSeconds
+            )
+        }.reversed()
 
         return BookReadingDetailResponse(
             bookStatus = userBook.status,
