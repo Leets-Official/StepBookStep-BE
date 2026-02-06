@@ -40,7 +40,7 @@ class ReadingLogService(
     ): ReadingLog {
         validateBookExists(bookId)
 
-        val activeGoal = validateByStatus(
+        validateByStatus(
             userId = userId,
             bookId = bookId,
             bookStatus = bookStatus,
@@ -61,15 +61,28 @@ class ReadingLogService(
                 )
             )
 
+        val actualRecordDate = recordDate ?: LocalDate.now()
+        val now = OffsetDateTime.now()
+
         val targetStatus = bookStatus.toReadStatus()
 
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
-            userBook.updatedAt = OffsetDateTime.now()
         }
 
-        // recordDate가 null이면 오늘 날짜 사용
-        val actualRecordDate = recordDate ?: LocalDate.now()
+        when (bookStatus) {
+            FINISHED -> {
+                userBook.finishedAt = actualRecordDate.atStartOfDay().atOffset(now.offset)
+                userBook.rating = rating
+            }
+            STOPPED -> {
+                userBook.finishedAt = actualRecordDate.atStartOfDay().atOffset(now.offset)
+                userBook.rating = rating
+            }
+            READING -> Unit
+        }
+
+        userBook.updatedAt = now
 
         // 완독/중지 시에는 페이지/시간 무시, READING일 때만 저장
         val log = readingLogRepository.save(
@@ -84,7 +97,6 @@ class ReadingLogService(
             )
         )
 
-        // 완독 또는 중지 시 활성 목표 비활성화
         if (bookStatus == FINISHED || bookStatus == STOPPED) {
             deactivateActiveGoalIfExists(userId, bookId)
         }
