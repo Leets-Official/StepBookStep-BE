@@ -298,7 +298,7 @@ class StatisticsService(
         // 장르별 집계 (Book의 genre 필드 사용)
         val categoryCountMap = mutableMapOf<String, Int>()
         finishedBooks.forEach { userBook ->
-            val category = userBook.book.genre.ifBlank { "미분류" }
+            val category = userBook.book.origin.ifBlank { "미분류" }
             categoryCountMap[category] = categoryCountMap.getOrDefault(category, 0) + 1
         }
 
