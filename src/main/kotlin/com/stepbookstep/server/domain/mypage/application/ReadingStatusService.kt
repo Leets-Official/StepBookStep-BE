@@ -47,6 +47,12 @@ class ReadingStatusService(
 
             ReadStatus.STOPPED -> {
                 userBook.status = ReadStatus.STOPPED
+                userBook.finishedAt = OffsetDateTime.now()
+
+                if (rating != null) {
+                    if (rating !in 1..5) throw CustomException(ErrorCode.INVALID_INPUT)
+                    userBook.rating = rating
+                }
             }
 
             ReadStatus.FINISHED -> {
