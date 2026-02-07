@@ -13,10 +13,19 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.time.OffsetDateTime
 
 @Entity
-@Table(name = "user_books")
+@Table(
+    name = "user_books",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uq_user_book",
+            columnNames = ["user_id", "book_id"]
+        )
+    ]
+)
 class UserBook(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +40,7 @@ class UserBook(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    var status: ReadStatus = ReadStatus.STOPPED,
+    var status: ReadStatus = ReadStatus.NOT_STARTED,
 
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),

@@ -34,6 +34,12 @@ class ReadingStatusService(
         }
 
         when (newStatus) {
+            ReadStatus.NOT_STARTED -> {
+                userBook.status = ReadStatus.NOT_STARTED
+                userBook.finishedAt = null
+                userBook.rating = null
+            }
+
             ReadStatus.READING -> {
                 userBook.status = ReadStatus.READING
                 // 재독서시, 데이터 보존
@@ -41,6 +47,12 @@ class ReadingStatusService(
 
             ReadStatus.STOPPED -> {
                 userBook.status = ReadStatus.STOPPED
+                userBook.finishedAt = OffsetDateTime.now()
+
+                if (rating != null) {
+                    if (rating !in 1..5) throw CustomException(ErrorCode.INVALID_INPUT)
+                    userBook.rating = rating
+                }
             }
 
             ReadStatus.FINISHED -> {
