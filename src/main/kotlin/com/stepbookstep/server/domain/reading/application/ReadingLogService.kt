@@ -230,15 +230,9 @@ class ReadingLogService(
 
         val allLogs = readingLogRepository.findAllByUserIdAndBookIdOrderByRecordDateAscCreatedAtAsc(userId, bookId)
 
-        val latestReadingLog = allLogs
-            .filter { it.bookStatus == READING && it.readQuantity != null }
-            .lastOrNull()
-
-        val currentPage = latestReadingLog?.readQuantity ?: 0
+        val currentPage = userBook.totalPagesRead
         val totalPages = book.itemPage
-        val progressPercent = if (totalPages > 0) {
-            ((currentPage.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
-        } else 0
+        val progressPercent = userBook.progressPercent
 
         val startDate = allLogs.firstOrNull()?.recordDate
         val endDate = allLogs
