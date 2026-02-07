@@ -34,6 +34,7 @@ enum class ErrorCode(
     INVALID_INPUT(400_002, HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
     NULL_VALUE(400_003, HttpStatus.BAD_REQUEST, "Null 값이 들어왔습니다."),
     INVALID_NICKNAME(400_004, HttpStatus.BAD_REQUEST, "닉네임은 필수입니다."),
+    EMAIL_REQUIRED(400_405, HttpStatus.BAD_REQUEST, "카카오 이메일 동의가 필요합니다."),
 
 
     // ========================

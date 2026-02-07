@@ -14,7 +14,12 @@ data class KakaoUserMeResponse(
     val nickname: String?
         get() = kakaoAccount?.profile?.nickname
 
+    val email: String?
+        get() = kakaoAccount?.email
+
     data class KakaoAccount(
+        val email: String? = null,
+
         val profile: Profile? = null
     )
 

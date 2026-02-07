@@ -40,9 +40,16 @@ class AuthService(
         val kakaoMe: KakaoUserMeResponse = kakaoApiClient.getMe(kakaoAccessToken)
         val providerUserId = kakaoMe.id.toString()
         val nicknameFromKakao = kakaoMe.nickname ?: "사용자"
+        val email = kakaoMe.email
+            ?: throw CustomException(ErrorCode.EMAIL_REQUIRED)
 
         // 2) 유저 조회/생성 (DB Transaction - UserService 내부에서 처리)
-        val (user, isNewUser) = userService.getOrCreateKakaoUser(providerUserId, nicknameFromKakao)
+        val (user, isNewUser) =
+            userService.getOrCreateKakaoUser(
+                providerUserId = providerUserId,
+                nickname = nicknameFromKakao,
+                email = email
+            )
 
         // 3) JWT 발급 (CPU 연산)
         val accessToken = jwtProvider.createToken(user.id, TokenType.ACCESS)
@@ -55,7 +62,8 @@ class AuthService(
             accessToken = accessToken,
             refreshToken = refreshToken,
             isNewUser = isNewUser,
-            nickname = user.nickname
+            nickname = user.nickname,
+            email = user.email
         )
     }
 
@@ -76,8 +84,15 @@ class AuthService(
         val kakaoMe = kakaoApiClient.getMe(kakaoAccessToken)
         val providerUserId = kakaoMe.id.toString()
         val nicknameFromKakao = kakaoMe.nickname ?: "사용자"
+        val email = kakaoMe.email
+            ?: throw CustomException(ErrorCode.EMAIL_REQUIRED)
 
-        val (user, isNewUser) = userService.getOrCreateKakaoUser(providerUserId, nicknameFromKakao)
+        val (user, isNewUser) =
+            userService.getOrCreateKakaoUser(
+                providerUserId = providerUserId,
+                nickname = nicknameFromKakao,
+                email = email
+            )
 
         val accessToken = jwtProvider.createToken(user.id, TokenType.ACCESS)
         val refreshToken = jwtProvider.createToken(user.id, TokenType.REFRESH)
@@ -88,7 +103,8 @@ class AuthService(
             accessToken = accessToken,
             refreshToken = refreshToken,
             isNewUser = isNewUser,
-            nickname = user.nickname
+            nickname = user.nickname,
+            email = user.email
         )
     }
 

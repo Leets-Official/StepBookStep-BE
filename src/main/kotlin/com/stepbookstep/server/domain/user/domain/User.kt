@@ -31,6 +31,9 @@ class User(
     @Column(nullable = false)
     var status: String = "ACTIVE",
 
+    @Column(nullable = false)
+    var email: String,
+
     @Column(name = "created_at", nullable = false)
     val createdAt: OffsetDateTime = OffsetDateTime.now(),
 

@@ -24,11 +24,12 @@ class UserService(
      * 카카오 계정 정보를 바탕으로 새로운 사용자를 생성하고 저장
      */
     @Transactional
-    fun createKakaoUser(providerUserId: String, nickname: String): User {
+    fun createKakaoUser(providerUserId: String, nickname: String, email: String): User {
         val user = User(
             provider = "KAKAO",
             providerUserId = providerUserId,
             nickname = nickname,
+            email = email
         )
         return userRepository.save(user)
     }
@@ -37,7 +38,7 @@ class UserService(
      * @return Pair(유저 객체, 신규 가입 여부)
      */
     @Transactional
-    fun getOrCreateKakaoUser(providerUserId: String, nickname: String): Pair<User, Boolean> {
+    fun getOrCreateKakaoUser(providerUserId: String, nickname: String, email: String): Pair<User, Boolean> {
         val existingUser = userRepository.findByProviderAndProviderUserId("KAKAO", providerUserId)
 
         return if (existingUser != null) {
@@ -47,6 +48,7 @@ class UserService(
                 provider = "KAKAO",
                 providerUserId = providerUserId,
                 nickname = nickname,
+                email = email
             )
             userRepository.save(newUser) to true
         }
