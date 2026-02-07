@@ -10,6 +10,9 @@ import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus
 import com.stepbookstep.server.domain.reading.domain.ReadingLogStatus.*
 import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
+import com.stepbookstep.server.domain.reading.presentation.dto.BookReadingDetailResponse
+import com.stepbookstep.server.domain.reading.presentation.dto.GoalInfo
+import com.stepbookstep.server.domain.reading.presentation.dto.ReadingLogItem
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
 import org.springframework.stereotype.Service
@@ -37,7 +40,7 @@ class ReadingLogService(
     ): ReadingLog {
         validateBookExists(bookId)
 
-        val activeGoal = validateByStatus(
+        validateByStatus(
             userId = userId,
             bookId = bookId,
             bookStatus = bookStatus,
@@ -58,15 +61,28 @@ class ReadingLogService(
                 )
             )
 
+        val actualRecordDate = recordDate ?: LocalDate.now()
+        val now = OffsetDateTime.now()
+
         val targetStatus = bookStatus.toReadStatus()
 
         if (userBook.status != targetStatus) {
             userBook.status = targetStatus
-            userBook.updatedAt = OffsetDateTime.now()
         }
 
-        // recordDate가 null이면 오늘 날짜 사용
-        val actualRecordDate = recordDate ?: LocalDate.now()
+        when (bookStatus) {
+            FINISHED -> {
+                userBook.finishedAt = actualRecordDate.atStartOfDay().atOffset(now.offset)
+                userBook.rating = rating
+            }
+            STOPPED -> {
+                userBook.finishedAt = actualRecordDate.atStartOfDay().atOffset(now.offset)
+                userBook.rating = rating
+            }
+            READING -> Unit
+        }
+
+        userBook.updatedAt = now
 
         // 완독/중지 시에는 페이지/시간 무시, READING일 때만 저장
         val log = readingLogRepository.save(
@@ -81,7 +97,16 @@ class ReadingLogService(
             )
         )
 
-        // 완독 또는 중지 시 활성 목표 비활성화
+        if (bookStatus == READING) {
+            userBook.totalPagesRead = readQuantity ?: userBook.totalPagesRead
+            val totalPages = book.itemPage ?: 0
+            userBook.progressPercent =
+                if (totalPages > 0 && userBook.totalPagesRead > 0) {
+                    ((userBook.totalPagesRead.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+                } else 0
+        }
+
+
         if (bookStatus == FINISHED || bookStatus == STOPPED) {
             deactivateActiveGoalIfExists(userId, bookId)
         }
@@ -186,5 +211,69 @@ class ReadingLogService(
         READING -> ReadStatus.READING
         FINISHED -> ReadStatus.FINISHED
         STOPPED -> ReadStatus.STOPPED
+    }
+
+    /**
+     * 독서 상세 페이지 조회
+     * - 도서 상태, 목표, 진도, 시작일/종료일, 별점, 독서 기록 리스트
+     */
+    @Transactional(readOnly = true)
+    fun getBookReadingDetail(userId: Long, bookId: Long): BookReadingDetailResponse {
+        val book = bookRepository.findById(bookId)
+            .orElseThrow { CustomException(ErrorCode.BOOK_NOT_FOUND) }
+
+        val userBook = userBookRepository.findByUserIdAndBookId(userId, bookId)
+            ?: throw CustomException(ErrorCode.USER_BOOK_NOT_FOUND)
+
+        val goal = readingGoalRepository.findTopByUserIdAndBookIdOrderByCreatedAtDesc(userId, bookId)
+        val goalMetric = goal?.metric
+
+        val allLogs = readingLogRepository.findAllByUserIdAndBookIdOrderByRecordDateAscCreatedAtAsc(userId, bookId)
+
+        val currentPage = userBook.totalPagesRead
+        val totalPages = book.itemPage
+        val progressPercent = userBook.progressPercent
+
+        val startDate = allLogs.firstOrNull()?.recordDate
+        val endDate = allLogs
+            .lastOrNull { it.bookStatus == FINISHED || it.bookStatus == STOPPED }
+            ?.recordDate
+
+        val rating = allLogs
+            .lastOrNull { (it.bookStatus == FINISHED || it.bookStatus == STOPPED) && it.rating != null }
+            ?.rating
+            ?: userBook.rating
+
+
+        val readingLogs = allLogs.filter { it.bookStatus == READING }
+
+        val readingLogItems = readingLogs.mapIndexed { index, log ->
+            val quantity = log.readQuantity
+            val prevQuantity = if (index > 0) readingLogs[index - 1].readQuantity ?: 0 else 0
+            val pagesRead = if (quantity != null) (quantity - prevQuantity).coerceAtLeast(0) else null
+
+            val percent = if (totalPages > 0 && quantity != null) {
+                ((quantity.toDouble() / totalPages) * 100).toInt().coerceIn(0, 100)
+            } else null
+
+            ReadingLogItem(
+                logId = log.id,
+                recordDate = log.recordDate,
+                pagesRead = pagesRead,
+                durationSeconds = log.durationSeconds
+            )
+        }.reversed()
+
+        return BookReadingDetailResponse(
+            bookStatus = userBook.status,
+            goal = goal?.let { GoalInfo.from(it) },
+            currentPage = currentPage,
+            totalPages = totalPages,
+            progressPercent = progressPercent,
+            startDate = startDate,
+            endDate = endDate,
+            rating = rating,
+            readingLogs = readingLogItems
+        )
     }
 }

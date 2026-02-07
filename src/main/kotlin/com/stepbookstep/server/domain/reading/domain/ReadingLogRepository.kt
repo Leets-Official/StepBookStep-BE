@@ -135,4 +135,20 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         @Param("userId") userId: Long,
         @Param("year") year: Int
     ): List<Array<Any>>
+
+    /**
+     * 특정 책의 전체 독서 기록 조회 (독서 상세 페이지용)
+     * 날짜 오름차순, 같은 날짜면 생성순
+     */
+    @Query("""
+        SELECT rl
+        FROM ReadingLog rl
+        WHERE rl.userId = :userId
+        AND rl.bookId = :bookId
+        ORDER BY rl.recordDate ASC, rl.createdAt ASC
+    """)
+    fun findAllByUserIdAndBookIdOrderByRecordDateAscCreatedAtAsc(
+        @Param("userId") userId: Long,
+        @Param("bookId") bookId: Long
+    ): List<ReadingLog>
 }
