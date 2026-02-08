@@ -48,11 +48,4 @@ interface UserBookRepository : JpaRepository<UserBook, Long> {
         AND ub.status IN ('READING', 'FINISHED')
     """)
     fun findReadingAndFinishedBooksByUserId(@Param("userId") userId: Long): List<UserBook>
-    /**
-     * 완독 횟수 카운트용 쿼리
-     */
-    @Query("SELECT COUNT(ub) FROM UserBook ub WHERE ub.userId=:userId AND ub.status='FINISHED'")
-    fun countFinishedBookByUserId(@Param("userId") userId:Long): Int
-
-
 }
