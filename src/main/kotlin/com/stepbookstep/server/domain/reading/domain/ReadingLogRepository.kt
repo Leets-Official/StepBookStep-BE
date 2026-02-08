@@ -151,4 +151,13 @@ interface ReadingLogRepository : JpaRepository<ReadingLog, Long> {
         @Param("userId") userId: Long,
         @Param("bookId") bookId: Long
     ): List<ReadingLog>
+
+    /**
+     * 특정 책의 완독 횟수 조회
+     */
+    fun countByUserIdAndBookIdAndBookStatus(
+        userId:Long,
+        bookId:Long,
+        bookStatus:ReadingLogStatus
+    ):Int
 }
