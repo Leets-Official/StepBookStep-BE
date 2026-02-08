@@ -154,7 +154,7 @@ class ReadingController(
         @Parameter(hidden = true) @LoginUserId userId: Long,
         @Valid @RequestBody request: CreateReadingLogRequest
     ): ResponseEntity<ApiResponse<CreateReadingLogResponse>> {
-        val log = readingLogService.createLog(
+        val result = readingLogService.createLog(
             userId = userId,
             bookId = bookId,
             bookStatus = request.bookStatus,
@@ -163,8 +163,9 @@ class ReadingController(
             durationSeconds = request.durationSeconds,
             rating = request.rating
         )
+
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.created(CreateReadingLogResponse(log.id)))
+            .body(ApiResponse.created(CreateReadingLogResponse(result.log.id, result.finishedCount)))
     }
 
     @Operation(
