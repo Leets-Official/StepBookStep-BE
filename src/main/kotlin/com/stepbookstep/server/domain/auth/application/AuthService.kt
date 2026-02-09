@@ -44,7 +44,7 @@ class AuthService(
             ?: throw CustomException(ErrorCode.EMAIL_REQUIRED)
 
         // 2) 유저 조회/생성 (DB Transaction - UserService 내부에서 처리)
-        val (user, isNewUser) =
+        val (user, signupType) =
             userService.getOrCreateKakaoUser(
                 providerUserId = providerUserId,
                 nickname = nicknameFromKakao,
@@ -61,7 +61,7 @@ class AuthService(
         return KakaoLoginResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            isNewUser = isNewUser,
+            signupType = signupType,
             nickname = user.nickname,
             email = user.email
         )
@@ -87,7 +87,7 @@ class AuthService(
         val email = kakaoMe.email
             ?: throw CustomException(ErrorCode.EMAIL_REQUIRED)
 
-        val (user, isNewUser) =
+        val (user, signupType) =
             userService.getOrCreateKakaoUser(
                 providerUserId = providerUserId,
                 nickname = nicknameFromKakao,
@@ -102,7 +102,7 @@ class AuthService(
         return KakaoLoginResponse(
             accessToken = accessToken,
             refreshToken = refreshToken,
-            isNewUser = isNewUser,
+            signupType = signupType,
             nickname = user.nickname,
             email = user.email
         )

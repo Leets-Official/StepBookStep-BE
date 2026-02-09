@@ -1,5 +1,6 @@
 package com.stepbookstep.server.domain.user.application
 
+import com.stepbookstep.server.domain.user.domain.SignupType
 import com.stepbookstep.server.domain.user.domain.User
 import com.stepbookstep.server.domain.user.domain.UserRepository
 import com.stepbookstep.server.domain.user.domain.UserStatus
@@ -40,7 +41,7 @@ class UserService(
      * @return Pair(유저 객체, 신규 가입 여부)
      */
     @Transactional
-    fun getOrCreateKakaoUser(providerUserId: String, nickname: String, email: String): Pair<User, Boolean> {
+    fun getOrCreateKakaoUser(providerUserId: String, nickname: String, email: String): Pair<User, SignupType> {
         val user = userRepository.findByProviderAndProviderUserId("KAKAO", providerUserId)
 
         if (user != null) {
@@ -53,10 +54,10 @@ class UserService(
                 user.email = email
                 user.updatedAt = OffsetDateTime.now()
 
-                return user to false // 다시 가입 처리
+                return user to SignupType.REJOIN // 다시 가입 처리
             }
 
-            return user to false
+            return user to SignupType.EXISTING
         }
 
         // 신규 가입
@@ -68,7 +69,7 @@ class UserService(
             status = UserStatus.ACTIVE
         )
 
-        return userRepository.save(newUser) to true
+        return userRepository.save(newUser) to SignupType.NEW
     }
 }
 
