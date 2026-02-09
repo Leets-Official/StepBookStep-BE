@@ -1,5 +1,6 @@
 package com.stepbookstep.server.domain.reading.domain
 
+import com.stepbookstep.server.domain.mypage.domain.ReadStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -48,4 +49,7 @@ interface UserBookRepository : JpaRepository<UserBook, Long> {
         AND ub.status IN ('READING', 'FINISHED')
     """)
     fun findReadingAndFinishedBooksByUserId(@Param("userId") userId: Long): List<UserBook>
+
+
+    fun countByUserIdAndStatus(userId: Long, status: ReadStatus):Int
 }

@@ -112,7 +112,7 @@ class ReadingLogService(
         }
 
         val finishedCount: Int? = if (bookStatus == FINISHED) {
-            readingLogRepository.countByUserIdAndBookIdAndBookStatus(userId, bookId, FINISHED)
+            userBookRepository.countByUserIdAndStatus(userId, ReadStatus.FINISHED)
         } else null
 
         return CreateLogResult(log, finishedCount)
