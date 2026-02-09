@@ -2,8 +2,10 @@ package com.stepbookstep.server.domain.user.application
 
 import com.stepbookstep.server.domain.user.domain.User
 import com.stepbookstep.server.domain.user.domain.UserRepository
+import com.stepbookstep.server.domain.user.domain.UserStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.OffsetDateTime
 
 /**
  * 사용자 관련 비즈니스 로직을 처리하는 서비스 클래스
@@ -39,19 +41,31 @@ class UserService(
      */
     @Transactional
     fun getOrCreateKakaoUser(providerUserId: String, nickname: String, email: String): Pair<User, Boolean> {
-        val existingUser = userRepository.findByProviderAndProviderUserId("KAKAO", providerUserId)
+        val user = userRepository.findByProviderAndProviderUserId("KAKAO", providerUserId)
 
-        return if (existingUser != null) {
-            existingUser to false
-        } else {
-            val newUser = User(
-                provider = "KAKAO",
-                providerUserId = providerUserId,
-                nickname = nickname,
-                email = email
-            )
-            userRepository.save(newUser) to true
+        if (user != null) {
+
+            // 탈퇴 유저 복구
+            if (user.status == UserStatus.WITHDRAWN) {
+                user.status = UserStatus.ACTIVE
+                user.updatedAt = OffsetDateTime.now()
+
+                return user to true // 다시 가입 처리
+            }
+
+            return user to false
         }
+
+        // 신규 가입
+        val newUser = User(
+            provider = "KAKAO",
+            providerUserId = providerUserId,
+            nickname = nickname,
+            email = email,
+            status = UserStatus.ACTIVE
+        )
+
+        return userRepository.save(newUser) to true
     }
 }
 
