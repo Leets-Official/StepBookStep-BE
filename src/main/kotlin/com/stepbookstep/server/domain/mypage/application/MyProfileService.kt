@@ -7,6 +7,7 @@ import com.stepbookstep.server.domain.user.domain.UserCategoryPreferenceReposito
 import com.stepbookstep.server.domain.user.domain.UserGenrePreference
 import com.stepbookstep.server.domain.user.domain.UserGenrePreferenceRepository
 import com.stepbookstep.server.domain.user.domain.UserRepository
+import com.stepbookstep.server.domain.user.domain.UserStatus
 import com.stepbookstep.server.external.kakao.KakaoUnlinkClient
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
@@ -132,7 +133,7 @@ class MyProfileService(
 
         refreshTokenRepository.deleteByUserId(userId)
 
-        user.status = "WITHDRAWN"
+        user.status = UserStatus.WITHDRAWN
         user.updatedAt = OffsetDateTime.now()
     }
 }

@@ -28,8 +28,9 @@ class User(
     @Column(nullable = false)
     var nickname: String,
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    var status: String = "ACTIVE",
+    var status: UserStatus = UserStatus.ACTIVE,
 
     @Column(nullable = false)
     var email: String,
