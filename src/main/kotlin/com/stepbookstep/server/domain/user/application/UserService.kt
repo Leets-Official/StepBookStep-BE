@@ -48,6 +48,9 @@ class UserService(
             // 탈퇴 유저 복구
             if (user.status == UserStatus.WITHDRAWN) {
                 user.status = UserStatus.ACTIVE
+
+                user.nickname = nickname
+                user.email = email
                 user.updatedAt = OffsetDateTime.now()
 
                 return user to true // 다시 가입 처리
