@@ -37,7 +37,7 @@ class ReadingLogService(
         readQuantity: Int?,
         durationSeconds: Int?,
         rating: Int?
-    ): ReadingLog {
+    ): CreateLogResult {
         validateBookExists(bookId)
 
         validateByStatus(
@@ -111,7 +111,11 @@ class ReadingLogService(
             deactivateActiveGoalIfExists(userId, bookId)
         }
 
-        return log
+        val finishedCount: Int? = if (bookStatus == FINISHED) {
+            readingLogRepository.countByUserIdAndBookIdAndBookStatus(userId, bookId, FINISHED)
+        } else null
+
+        return CreateLogResult(log, finishedCount)
     }
 
     private fun validateBookExists(bookId: Long) {
@@ -277,3 +281,8 @@ class ReadingLogService(
         )
     }
 }
+
+data class CreateLogResult(
+    val log: ReadingLog,
+    val finishedCount: Int?
+)
