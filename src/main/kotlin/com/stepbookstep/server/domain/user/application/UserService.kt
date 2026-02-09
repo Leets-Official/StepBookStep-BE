@@ -53,7 +53,7 @@ class UserService(
                 user.email = email
                 user.updatedAt = OffsetDateTime.now()
 
-                return user to true // 다시 가입 처리
+                return user to false // 다시 가입 처리
             }
 
             return user to false
