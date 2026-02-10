@@ -3,6 +3,7 @@ package com.stepbookstep.server.domain.reading.application
 import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.reading.domain.*
 import com.stepbookstep.server.domain.reading.presentation.dto.*
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -21,6 +22,7 @@ class StatisticsService(
     /**
      * 전체 독서 통계 조회
      */
+    @Cacheable(value = ["userStatistics"], key = "#userId + '_' + #year")
     @Transactional(readOnly = true)
     fun getReadingStatistics(userId: Long, year: Int): ReadingStatisticsResponse {
         return ReadingStatisticsResponse(
