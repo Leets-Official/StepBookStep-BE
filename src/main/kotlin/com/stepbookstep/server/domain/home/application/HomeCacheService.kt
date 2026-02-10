@@ -41,4 +41,14 @@ class HomeCacheService(
     fun getBooksByGenreId(genreId: Long): List<Book> {
         return bookRepository.findAllByGenreId(genreId)
     }
+
+    @Cacheable(value = ["distinctCategoryIds"])
+    fun getDistinctCategoryIds(): List<Long> {
+        return bookRepository.findDistinctCategoryIds()
+    }
+
+    @Cacheable(value = ["distinctGenreIds"])
+    fun getDistinctGenreIds(): List<Long> {
+        return bookRepository.findDistinctGenreIds()
+    }
 }
