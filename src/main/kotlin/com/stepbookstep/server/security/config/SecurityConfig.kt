@@ -45,7 +45,8 @@ class SecurityConfig {
 
         val origins = mutableListOf(
             "http://localhost:5173",      // Vite
-            "https://fix-distribute-error.d2q7zz6yc7bc0h.amplifyapp.com"
+            "https://fix-distribute-error.d2q7zz6yc7bc0h.amplifyapp.com",
+            "https://main.d11ed5845oqk9a.amplifyapp.com"
         )
         System.getenv("CORS_ALLOWED_ORIGIN")?.takeIf { it.isNotBlank() }?.let { origins.add(it) }
 

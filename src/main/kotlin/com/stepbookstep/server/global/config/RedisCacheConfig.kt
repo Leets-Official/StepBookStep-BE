@@ -31,7 +31,7 @@ class RedisCacheConfig {
             disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             activateDefaultTyping(
                 LaissezFaireSubTypeValidator.instance,
-                ObjectMapper.DefaultTyping.NON_FINAL,
+                ObjectMapper.DefaultTyping.EVERYTHING,
                 JsonTypeInfo.As.PROPERTY
             )
         }
