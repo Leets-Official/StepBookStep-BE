@@ -4,12 +4,13 @@ import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.reading.application.ReadingGoalService
 import com.stepbookstep.server.domain.reading.application.ReadingLogService
 import com.stepbookstep.server.domain.reading.presentation.dto.BookReadingDetailResponse
+import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingGoalRequest
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogRequest
 import com.stepbookstep.server.domain.reading.presentation.dto.CreateReadingLogResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.ReadingGoalResponse
 import com.stepbookstep.server.domain.reading.presentation.dto.RoutineItem
 import com.stepbookstep.server.domain.reading.presentation.dto.RoutineListResponse
-import com.stepbookstep.server.domain.reading.presentation.dto.UpsertReadingGoalRequest
+import com.stepbookstep.server.domain.reading.presentation.dto.UpdateReadingGoalRequest
 import com.stepbookstep.server.global.response.ApiResponse
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
@@ -20,6 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -65,31 +67,19 @@ class ReadingController(
     }
 
     @Operation(
-        summary = "독서 목표 생성/수정/삭제",
+        summary = "독서 목표 생성",
         description = """
-            독서 목표를 생성, 수정, 삭제합니다.
-            - 생성/수정: period, metric, targetAmount를 모두 포함
-            - 삭제: delete=true 명시
+            새로운 독서 목표를 생성합니다.
+            - period, metric, targetAmount 모두 필수
+            - 이미 활성 목표가 있으면 해당 목표를 수정합니다.
         """
     )
-    @PatchMapping("/books/{bookId}/goals")
-    fun upsertOrDeleteGoal(
+    @PostMapping("/books/{bookId}/goals")
+    fun createGoal(
         @Parameter(description = "도서 ID") @PathVariable bookId: Long,
         @Parameter(hidden = true) @LoginUserId userId: Long,
-        @Valid @RequestBody request: UpsertReadingGoalRequest
-    ): ResponseEntity<ApiResponse<ReadingGoalResponse?>> {
-        // 삭제 요청인 경우
-        if (request.delete == true) {
-            readingGoalService.deleteGoal(userId, bookId)
-            return ResponseEntity.ok(ApiResponse.ok(null))
-        }
-
-        // 생성/수정 요청 - 필수 필드 검증
-        if (request.period == null || request.metric == null || request.targetAmount == null) {
-            throw CustomException(ErrorCode.INVALID_INPUT)
-        }
-
-        // 생성/수정 요청인 경우
+        @Valid @RequestBody request: CreateReadingGoalRequest
+    ): ResponseEntity<ApiResponse<ReadingGoalResponse>> {
         val goal = readingGoalService.upsertGoal(
             userId = userId,
             bookId = bookId,
@@ -104,10 +94,62 @@ class ReadingController(
         val response = ReadingGoalResponse.from(
             goal = goalWithProgress.goal,
             currentProgress = goalWithProgress.currentProgress,
-            achievedAmount = goalWithProgress.achievedAmount  // 추가!
+            achievedAmount = goalWithProgress.achievedAmount
+        )
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.created(response))
+    }
+
+    @Operation(
+        summary = "독서 목표 수정",
+        description = """
+            기존 독서 목표를 수정합니다.
+            - period, metric, targetAmount 중 변경할 필드만 전달 가능
+            - 활성 목표가 없으면 404
+        """
+    )
+    @PatchMapping("/books/{bookId}/goals")
+    fun updateGoal(
+        @Parameter(description = "도서 ID") @PathVariable bookId: Long,
+        @Parameter(hidden = true) @LoginUserId userId: Long,
+        @Valid @RequestBody request: UpdateReadingGoalRequest
+    ): ResponseEntity<ApiResponse<ReadingGoalResponse>> {
+        // 기존 활성 목표가 있어야 수정 가능
+        val existing = readingGoalService.getActiveGoalWithProgress(userId, bookId)
+            ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
+
+        val goal = readingGoalService.upsertGoal(
+            userId = userId,
+            bookId = bookId,
+            period = request.period ?: existing.goal.period,
+            metric = request.metric ?: existing.goal.metric,
+            targetAmount = request.targetAmount ?: existing.goal.targetAmount
+        )
+
+        val goalWithProgress = readingGoalService.getActiveGoalWithProgress(userId, bookId)
+            ?: throw CustomException(ErrorCode.GOAL_NOT_FOUND)
+
+        val response = ReadingGoalResponse.from(
+            goal = goalWithProgress.goal,
+            currentProgress = goalWithProgress.currentProgress,
+            achievedAmount = goalWithProgress.achievedAmount
         )
 
         return ResponseEntity.ok(ApiResponse.ok(response))
+    }
+
+    @Operation(
+        summary = "독서 목표 삭제",
+        description = "활성 독서 목표를 삭제(비활성화)합니다."
+    )
+    @DeleteMapping("/books/{bookId}/goals")
+    fun deleteGoal(
+        @Parameter(description = "도서 ID") @PathVariable bookId: Long,
+        @Parameter(hidden = true) @LoginUserId userId: Long
+    ): ResponseEntity<ApiResponse<Nothing?>> {
+        readingGoalService.deleteGoal(userId, bookId)
+        return ResponseEntity.ok(ApiResponse.ok(null))
     }
 
     @Operation(summary = "책 목표 조회", description = "특정 책의 독서 목표를 조회합니다. 완독/중지 상태에서도 비활성화된 목표를 표시합니다.")
@@ -122,7 +164,7 @@ class ReadingController(
             ReadingGoalResponse.from(
                 goal = it.goal,
                 currentProgress = it.currentProgress,
-                achievedAmount = it.achievedAmount  // 추가!
+                achievedAmount = it.achievedAmount
             )
         }
 
