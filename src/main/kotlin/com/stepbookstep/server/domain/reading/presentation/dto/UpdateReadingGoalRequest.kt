@@ -2,16 +2,17 @@ package com.stepbookstep.server.domain.reading.presentation.dto
 
 import com.stepbookstep.server.domain.reading.domain.GoalMetric
 import com.stepbookstep.server.domain.reading.domain.GoalPeriod
+import jakarta.validation.constraints.Positive
 
 /**
- * 독서 목표 생성/수정/삭제 요청
- *
- * - 삭제: delete = true (다른 필드는 무시됨)
- * - 생성/수정: period, metric, targetAmount 모두 필수
+ * 독서 목표 수정 요청
+ * - 변경할 필드만 전달
+ * - 전달하지 않은 필드는 기존 값 유지
  */
-data class UpsertReadingGoalRequest(
+data class UpdateReadingGoalRequest(
     val period: GoalPeriod? = null,
     val metric: GoalMetric? = null,
-    val targetAmount: Int? = null,
-    val delete: Boolean = false
+
+    @field:Positive(message = "targetAmount는 1 이상이어야 합니다")
+    val targetAmount: Int? = null
 )
