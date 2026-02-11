@@ -101,12 +101,9 @@ class HomeQueryService(
     }
 
     private fun selectRandomCategoryOrGenre(): SelectedBooks {
-        val allBooks = bookRepository.findAll()
-
-        // categoryId가 있는 책들의 고유 categoryId 목록
-        val categoryIds = allBooks.mapNotNull { it.categoryId }.distinct()
-        // genreId가 있는 책들의 고유 genreId 목록
-        val genreIds = allBooks.mapNotNull { it.genreId }.distinct()
+        // 캐시된 DISTINCT ID 목록 조회
+        val categoryIds = homeCacheService.getDistinctCategoryIds()
+        val genreIds = homeCacheService.getDistinctGenreIds()
 
         val allOptions = mutableListOf<Pair<String, Long>>()
         categoryIds.forEach { allOptions.add("category" to it) }
@@ -118,8 +115,8 @@ class HomeQueryService(
 
         val selected = allOptions.random()
         val books = when (selected.first) {
-            "category" -> allBooks.filter { it.categoryId == selected.second }
-            "genre" -> allBooks.filter { it.genreId == selected.second }
+            "category" -> homeCacheService.getBooksByCategoryId(selected.second)
+            "genre" -> homeCacheService.getBooksByGenreId(selected.second)
             else -> emptyList()
         }.shuffled().take(20)
 

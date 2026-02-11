@@ -1,7 +1,5 @@
 package com.stepbookstep.server.domain.book.domain
 
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Query
@@ -41,4 +39,10 @@ interface BookRepository : JpaRepository<Book, Long>, JpaSpecificationExecutor<B
 
     @Query("SELECT b FROM Book b WHERE b.genreId = :genreId")
     fun findAllByGenreId(@Param("genreId") genreId: Long): List<Book>
+
+    @Query("SELECT DISTINCT b.categoryId FROM Book b")
+    fun findDistinctCategoryIds(): List<Long>
+
+    @Query("SELECT DISTINCT b.genreId FROM Book b WHERE b.genreId IS NOT NULL")
+    fun findDistinctGenreIds(): List<Long>
 }

@@ -15,6 +15,7 @@ import com.stepbookstep.server.domain.reading.presentation.dto.GoalInfo
 import com.stepbookstep.server.domain.reading.presentation.dto.ReadingLogItem
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -28,6 +29,7 @@ class ReadingLogService(
     private val readingGoalRepository: ReadingGoalRepository
 ) {
 
+    @CacheEvict(value = ["userStatistics"], key = "#userId + '_' + T(java.time.Year).now().value")
     @Transactional
     fun createLog(
         userId: Long,

@@ -44,7 +44,7 @@ dependencies {
 
     // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     // Jackson Java 8 Date/Time
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")

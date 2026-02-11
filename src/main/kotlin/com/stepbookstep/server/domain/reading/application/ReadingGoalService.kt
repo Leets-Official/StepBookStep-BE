@@ -12,6 +12,7 @@ import com.stepbookstep.server.domain.reading.domain.UserBook
 import com.stepbookstep.server.domain.reading.domain.UserBookRepository
 import com.stepbookstep.server.global.response.CustomException
 import com.stepbookstep.server.global.response.ErrorCode
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -30,6 +31,7 @@ class ReadingGoalService(
      * - 기존 활성 목표가 없으면 새로 생성
      * - 기존 활성 목표가 있으면 수정
      */
+    @CacheEvict(value = ["userStatistics"], key = "#userId + '_' + T(java.time.Year).now().value")
     @Transactional
     fun upsertGoal(
         userId: Long,
@@ -96,6 +98,7 @@ class ReadingGoalService(
     /**
      * 활성 목표 삭제 (비활성화)
      */
+    @CacheEvict(value = ["userStatistics"], key = "#userId + '_' + T(java.time.Year).now().value")
     @Transactional
     fun deleteGoal(userId: Long, bookId: Long) {
         val existingGoal = readingGoalRepository.findByUserIdAndBookIdAndActiveTrue(userId, bookId)
