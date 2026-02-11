@@ -1,5 +1,6 @@
 package com.stepbookstep.server.domain.book.domain
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import jakarta.persistence.*
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -82,6 +83,7 @@ class Book(
     val vocabLevel: VocabLevel = VocabLevel.EASY,
 
     @Column(name = "is_bestseller", nullable = false)
+    @param:JsonProperty("isBestseller")
     val isBestseller: Boolean = false,
 
     // ===== 시스템 필드 =====
