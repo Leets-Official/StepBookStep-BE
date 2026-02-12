@@ -45,27 +45,27 @@ object BookSpecification {
     }
 
     /**
-     * 국가별 분류 필터
+     * 국가별 분류 필터 (복수 선택 가능 - OR 조건)
      */
-    fun withOrigin(origin: String?): Specification<Book> {
+    fun withOrigins(origins: List<String>?): Specification<Book> {
         return Specification { root, _, cb ->
-            if (origin.isNullOrBlank()) {
+            if (origins.isNullOrEmpty()) {
                 null
             } else {
-                cb.equal(root.get<String>("origin"), origin)
+                root.get<String>("origin").`in`(origins)
             }
         }
     }
 
     /**
-     * 장르별 분류 필터
+     * 장르별 분류 필터 (복수 선택 가능 - OR 조건)
      */
-    fun withGenre(genre: String?): Specification<Book> {
+    fun withGenres(genres: List<String>?): Specification<Book> {
         return Specification { root, _, cb ->
-            if (genre.isNullOrBlank()) {
+            if (genres.isNullOrEmpty()) {
                 null
             } else {
-                cb.equal(root.get<String>("genre"), genre)
+                root.get<String>("genre").`in`(genres)
             }
         }
     }
