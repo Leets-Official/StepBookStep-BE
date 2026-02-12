@@ -59,6 +59,7 @@ class AuthService(
         refreshTokenService.save(userId = user.id, refreshToken = refreshToken)
 
         return KakaoLoginResponse(
+            userId=user.id,
             accessToken = accessToken,
             refreshToken = refreshToken,
             signupType = signupType,
@@ -100,6 +101,7 @@ class AuthService(
         refreshTokenService.save(userId = user.id, refreshToken = refreshToken)
 
         return KakaoLoginResponse(
+            userId=user.id,
             accessToken = accessToken,
             refreshToken = refreshToken,
             signupType = signupType,
