@@ -74,24 +74,28 @@ class BookQueryService(
     fun filter(
         level: Int?,
         pageRange: String?,
-        origin: String?,
-        genre: String?,
+        origins: List<String>?,
+        genres: List<String>?,
         keyword: String?,
         cursor: Long?
     ): BookFilterResponse {
+        // 쉼표로 구분된 문자열도 지원
+        val parsedOrigins = origins?.flatMap { it.split(",") }?.map { it.trim() }?.filter { it.isNotBlank() }
+        val parsedGenres = genres?.flatMap { it.split(",") }?.map { it.trim() }?.filter { it.isNotBlank() }
+
         // 필터 없이 검색어만 입력한 경우 예외 처리
-        val hasFilter = level != null || pageRange != null || origin != null || genre != null
+        val hasFilter = level != null || pageRange != null || !parsedOrigins.isNullOrEmpty() || !parsedGenres.isNullOrEmpty()
         if (!hasFilter && !keyword.isNullOrBlank()) {
             throw CustomException(ErrorCode.FILTER_REQUIRED, null)
         }
 
         // 유효성 검증
-        validateFilterParams(level, pageRange, origin, genre)
+        validateFilterParams(level, pageRange, parsedOrigins, parsedGenres)
 
         val spec = Specification.where(BookSpecification.withLevel(level))
             .and(BookSpecification.withPageRange(pageRange))
-            .and(BookSpecification.withOrigin(origin))
-            .and(BookSpecification.withGenre(genre))
+            .and(BookSpecification.withOrigins(parsedOrigins))
+            .and(BookSpecification.withGenres(parsedGenres))
             .and(BookSpecification.withKeyword(keyword))
             .and(BookSpecification.withCursor(cursor))
 
@@ -111,8 +115,8 @@ class BookQueryService(
     private fun validateFilterParams(
         level: Int?,
         pageRange: String?,
-        origin: String?,
-        genre: String?
+        origins: List<String>?,
+        genres: List<String>?
     ) {
         if (level != null && level !in VALID_LEVELS) {
             throw CustomException(ErrorCode.INVALID_DIFFICULTY, null)
@@ -120,11 +124,15 @@ class BookQueryService(
         if (pageRange != null && pageRange !in VALID_PAGE_RANGES) {
             throw CustomException(ErrorCode.INVALID_PAGE_RANGE, null)
         }
-        if (origin != null && origin !in VALID_ORIGINS) {
-            throw CustomException(ErrorCode.INVALID_ORIGIN, null)
+        origins?.forEach { origin ->
+            if (origin !in VALID_ORIGINS) {
+                throw CustomException(ErrorCode.INVALID_ORIGIN, null)
+            }
         }
-        if (genre != null && genre !in VALID_GENRES) {
-            throw CustomException(ErrorCode.INVALID_GENRE, null)
+        genres?.forEach { genre ->
+            if (genre !in VALID_GENRES) {
+                throw CustomException(ErrorCode.INVALID_GENRE, null)
+            }
         }
     }
 }
