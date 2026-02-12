@@ -1,5 +1,7 @@
 package com.stepbookstep.server.domain.mypage.application
 
+import com.stepbookstep.server.domain.book.domain.Book
+import com.stepbookstep.server.domain.book.domain.BookRepository
 import com.stepbookstep.server.domain.mypage.application.dto.UpdateNicknameRequest
 import com.stepbookstep.server.domain.mypage.application.dto.UpdatePreferencesRequest
 import com.stepbookstep.server.domain.user.domain.UserCategoryPreference
@@ -23,9 +25,10 @@ class MyProfileService(
     private val refreshTokenRepository: RefreshTokenRepository,
     private val userCategoryPreferenceRepository: UserCategoryPreferenceRepository,
     private val userGenrePreferenceRepository: UserGenrePreferenceRepository,
-    private val kakaoUnlinkClient: KakaoUnlinkClient
+    private val kakaoUnlinkClient: KakaoUnlinkClient,
+    private val bookRepository: BookRepository,
 
-) {
+    ) {
     companion object {
         private val VALID_LEVELS = setOf(1, 2, 3)
         private val log = LoggerFactory.getLogger(MyProfileService::class.java)
@@ -46,11 +49,14 @@ class MyProfileService(
         val requestGenreIds = request.genreIds.distinct().toSet()
 
         // 존재 여부 검증
-        if (!userCategoryPreferenceRepository.existsAllByIds(requestCategoryIds)) {
+        val validCategoryIds = bookRepository.findDistinctCategoryIds().toSet()
+        val validGenreIds = bookRepository.findDistinctGenreIds().toSet()
+
+        if (!validCategoryIds.containsAll(requestCategoryIds)) {
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
-        if (!userGenrePreferenceRepository.existsAllByIds(requestGenreIds)) {
+        if (!validGenreIds.containsAll(requestGenreIds)) {
             throw CustomException(ErrorCode.INVALID_INPUT)
         }
 
